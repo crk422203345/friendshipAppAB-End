@@ -4,6 +4,9 @@
 		<view class="text-area">
 			<text class="title">{{title}}</text>
 		</view>
+		<view style="margin-top: 50rpx; width: 80%;">
+			<u-button type="primary" text="uView Pro 按钮"></u-button>
+		</view>
 	</view>
 </template>
 
