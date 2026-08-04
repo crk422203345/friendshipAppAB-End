@@ -1,32 +1,11 @@
-# Project Rules and Specifications
+# Project Rules
 
-When working on the **friendshipApp** codebase, you must always adhere to the following core rules:
+This repository is a shared uni-app Vue 3 template for the A, B, and C mobile apps.
 
-## 微信小程序包体积管控规则 (2MB Limits)
-
-We have a strict 2MB main package limit. You must read and follow the full specification document at [DEVELOPMENT_SPEC.md](file:///f:/project/friendshipApp/DEVELOPMENT_SPEC.md).
-
-### Core Summary of Rules:
-1. **Directory Structure & Subpackages**:
-   - The main package (`pages/`) ONLY contains Tabbar pages and the login page.
-   - All other pages (chat details, publish, settings, user profiles, payments, etc.) MUST be placed inside the `subpackages/` directory.
-   - Resources (images, localized components, JS utilities, SDKs) specific to a subpackage must reside inside that subpackage's directory. No cross-importing between subpackages is allowed.
-
-2. **uView Pro Components**:
-   - Component auto-import must use `easycom` in `pages.json`.
-   - Never register components globally in `main.js`.
-   - Keep global styles light. Component styles are compiled on demand.
-
-3. **Static Assets**:
-   - All images >10KB, background images, emojis, user photo galleries, and fonts must be hosted on cloud CDN. Do not commit them to the local git repo or compile them into the code package.
-   - Use WebP format for small local icons.
-
-4. **JavaScript & Third-Party SDKs**:
-   - Heavyweight SDKs (like Tencent IM SDK) must be loaded dynamically inside the subpackages using dynamic imports: `await import('tencent-cloud-im-uniapp')`. Do not import them globally in `main.js`.
-   - Always use named exports (`export function xxx`) for tree-shaking support.
-   - Use Vue 3 Composition API `<script setup>` and make sure Options API is disabled via `__VUE_OPTIONS_API__: false` in Vite configuration to minimize core package size.
-   - Clean up consoles/debuggers in production builds.
-
-5. **Pages & Components**:
-   - Keep global components under `components/` <=15KB. Put custom business components inside their respective subpackage.
-   - Use virtual scrolling (`u-list`) for high-frequency social listing pages (matching cards, feed timeline) to optimize DOM rendering and performance.
+1. Keep the template product-neutral. Do not add client-specific pages, credentials, API hosts, payment settings, or SDK keys to it.
+2. Put reusable request, session, storage, upload, runtime, and permission capabilities in `core/`, `services/`, and `config/`.
+3. A/B/C each ship as a separate Android/iOS application. Their package names, signing files, icons, push settings, payment configuration, and store metadata belong in their own app repositories.
+4. Use Vue 3 `<script setup>` for application pages. Keep uView Pro components on easycom auto-import; never globally register its component catalog.
+5. Use the least-privilege rule for native permissions. Add a permission only when a real feature requires it, then verify the denied-permission path on a device.
+6. Keep heavy SDKs out of `main.js`; load them inside the feature that owns them.
+7. Mini-program support is optional compatibility work. Its package and subpackage constraints must not dictate the App-first template architecture.

@@ -1,23 +1,54 @@
 {
-  "name": "friendshipapp",
+  "name": "friendship-app-template",
   "version": "1.0.0",
-  "main": "main.js",
+  "private": true,
+  "description": "A/B/C 三端 App 共用的 uni-app Vue 3 基础模板",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev:app": "cross-env UNI_INPUT_DIR=. UNI_APP_CODE=template uni -p app",
+    "dev:app:a": "cross-env UNI_INPUT_DIR=. UNI_APP_CODE=a uni -p app",
+    "dev:app:b": "cross-env UNI_INPUT_DIR=. UNI_APP_CODE=b uni -p app",
+    "dev:app:c": "cross-env UNI_INPUT_DIR=. UNI_APP_CODE=c uni -p app",
+    "dev:h5": "cross-env UNI_INPUT_DIR=. UNI_APP_CODE=template uni",
+    "dev:mp-weixin": "cross-env UNI_INPUT_DIR=. UNI_APP_CODE=template uni -p mp-weixin",
+    "build:app": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=template uni build -p app",
+    "build:app:a": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=a uni build -p app",
+    "build:app:b": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=b uni build -p app",
+    "build:app:c": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=c uni build -p app",
+    "build:h5": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=template uni build",
+    "build:mp-weixin": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=template uni build -p mp-weixin",
+    "verify": "npm run build:mp-weixin",
+    "test": "npm run verify"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/crk422203345/friendshipApp.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "uni-app",
+    "vue3",
+    "app-template",
+    "mobile"
+  ],
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/crk422203345/friendshipApp/issues"
-  },
-  "homepage": "https://github.com/crk422203345/friendshipApp#readme",
-  "description": "",
   "dependencies": {
-    "uview-pro": "^0.6.6"
+    "@dcloudio/uni-app": "3.0.0-5010520260709002",
+    "@dcloudio/uni-app-plus": "3.0.0-5010520260709002",
+    "@dcloudio/uni-components": "3.0.0-5010520260709002",
+    "@dcloudio/uni-h5": "3.0.0-5010520260709002",
+    "@dcloudio/uni-mp-weixin": "3.0.0-5010520260709002",
+    "uview-pro": "^0.6.6",
+    "vue": "3.4.21",
+    "vue-i18n": "^9.1.9"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "3.4.31",
+    "@dcloudio/uni-cli-shared": "3.0.0-5010520260709002",
+    "@dcloudio/vite-plugin-uni": "3.0.0-5010520260709002",
+    "@vue/runtime-core": "3.4.21",
+    "cross-env": "^7.0.3",
+    "rollup": "4.14.3",
+    "sass": "1.77.8",
+    "terser": "^5.31.3",
+    "vite": "5.2.8"
   }
 }

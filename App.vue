@@ -1,18 +1,23 @@
-<script>
-	export default {
-		onLaunch: function() {
-			console.log('App Launch')
-		},
-		onShow: function() {
-			console.log('App Show')
-		},
-		onHide: function() {
-			console.log('App Hide')
-		}
-	}
+<script setup>
+import { onLaunch } from '@dcloudio/uni-app'
+import { hydrateSession } from './core/session'
+
+onLaunch(() => {
+  hydrateSession()
+})
 </script>
 
 <style lang="scss">
-	/*每个页面公共css */
-	@import 'uview-pro/index.scss';
+@import 'uview-pro/index.scss';
+
+page {
+  min-height: 100%;
+  background: #f4f6f8;
+  color: #1e2933;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button::after {
+  border: 0;
+}
 </style>
