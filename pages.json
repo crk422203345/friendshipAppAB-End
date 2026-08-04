@@ -7,6 +7,48 @@
   },
   "pages": [
     {
+      "path": "pages/auth/login",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/auth/forgot-password",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "忘记密码"
+      }
+    },
+    {
+      "path": "pages/auth/register",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "注册账号"
+      }
+    },
+    {
+      "path": "pages/auth/merchant-onboarding",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "商家开店"
+      }
+    },
+    {
+      "path": "pages/merchant/home",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "商家端"
+      }
+    },
+    {
+      "path": "pages/agent/home",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "代理人端"
+      }
+    },
+    {
       "path": "pages/index/index",
       "style": {
         "navigationBarTitleText": "App Template",
@@ -17,7 +59,7 @@
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "App Template",
+    "navigationBarTitleText": "业务服务平台",
     "navigationBarBackgroundColor": "#ffffff",
     "backgroundColor": "#f4f6f8"
   }

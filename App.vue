@@ -12,8 +12,8 @@ onLaunch(() => {
 
 page {
   min-height: 100%;
-  background: #f4f6f8;
-  color: #1e2933;
+  background: #f7f8fc;
+  color: #172033;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
