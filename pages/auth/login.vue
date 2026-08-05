@@ -59,6 +59,10 @@
         <text class="switch-arrow">→</text>
       </view>
       <text class="agreement">登录即表示你同意《服务协议》与《隐私政策》</text>
+      <button class="quick-login" :loading="quickSubmitting" @tap="quickLogin">
+        <text class="quick-login-icon">⚡</text>
+        一键登录体验 {{ portal.name }}
+      </button>
     </view>
   </view>
 </template>
@@ -77,6 +81,7 @@ const password = ref('')
 const code = ref('')
 const countdown = ref(0)
 const submitting = ref(false)
+const quickSubmitting = ref(false)
 let countdownTimer
 
 const portal = computed(() => getPortal(portalCode.value))
@@ -127,6 +132,25 @@ async function submitLogin() {
   }
 }
 
+async function quickLogin() {
+  if (quickSubmitting.value) return
+  quickSubmitting.value = true
+  try {
+    const result = await login({
+      email: portalCode.value === PORTAL_AGENT ? 'agent@example.com' : 'merchant@example.com',
+      password: 'demo-pass',
+      loginType: 'password',
+      portal: portalCode.value
+    })
+    setSession(result)
+    uni.reLaunch({ url: getPortal(result.portal).homePath })
+  } catch (error) {
+    uni.showToast({ title: error.message || '一键登录失败，请重试', icon: 'none' })
+  } finally {
+    quickSubmitting.value = false
+  }
+}
+
 function switchPortal() {
   const next = portalCode.value === PORTAL_AGENT ? PORTAL_MERCHANT : PORTAL_AGENT
   uni.redirectTo({ url: `/pages/auth/login?portal=${next}` })
@@ -174,5 +198,5 @@ function goLegacyPage() {
 .primary-button { width: 100%; margin-top: 42rpx; border-radius: 16rpx; background: #5865f2; color: #fff; font-size: 29rpx; font-weight: 650; line-height: 94rpx; }.portal-merchant .primary-button { background: #0f9d7a; }.primary-button::after, .secondary-button::after { border: 0; }
 .card-actions { display: flex; justify-content: flex-end; gap: 26rpx; margin-top: 24rpx; color: #69758c; font-size: 23rpx; }
 .onboarding { display: flex; align-items: center; justify-content: space-between; margin-top: 28rpx; padding: 26rpx 28rpx; border: 1rpx solid #cbece2; border-radius: 22rpx; background: #edfbf6; }.onboarding-title { color: #1b644f; font-size: 27rpx; font-weight: 700; }.onboarding-copy { margin-top: 7rpx; color: #568473; font-size: 21rpx; line-height: 1.45; }.arrow { color: #0f9d7a; font-size: 52rpx; font-weight: 300; }
-.secondary-button { width: 100%; margin-top: 26rpx; border: 1rpx solid #dce1eb; border-radius: 16rpx; background: #fff; color: #536078; font-size: 27rpx; line-height: 88rpx; }.switch-portal { display: flex; align-items: center; justify-content: center; gap: 12rpx; margin-top: 64rpx; color: #43506a; font-size: 27rpx; }.switch-arrow { color: #5865f2; font-size: 37rpx; font-weight: 600; }.portal-merchant .switch-arrow { color: #0f9d7a; }.agreement { margin-top: 28rpx; color: #a0a8b8; text-align: center; font-size: 20rpx; }
+.secondary-button { width: 100%; margin-top: 26rpx; border: 1rpx solid #dce1eb; border-radius: 16rpx; background: #fff; color: #536078; font-size: 27rpx; line-height: 88rpx; }.switch-portal { display: flex; align-items: center; justify-content: center; gap: 12rpx; margin-top: 64rpx; color: #43506a; font-size: 27rpx; }.switch-arrow { color: #5865f2; font-size: 37rpx; font-weight: 600; }.portal-merchant .switch-arrow { color: #0f9d7a; }.agreement { margin-top: 28rpx; color: #a0a8b8; text-align: center; font-size: 20rpx; }.quick-login { display: flex; align-items: center; justify-content: center; width: 100%; margin-top: 32rpx; border: 1rpx solid #ccd2ff; border-radius: 16rpx; background: rgba(255,255,255,.78); color: #5865f2; font-size: 26rpx; font-weight: 650; line-height: 88rpx; box-shadow: 0 12rpx 25rpx rgba(46,58,104,.05); }.quick-login::after { border: 0; }.quick-login-icon { margin-right: 10rpx; font-size: 27rpx; }.portal-merchant .quick-login { border-color: #bce9da; color: #0f9d7a; }
 </style>
