@@ -49,6 +49,66 @@
       }
     },
     {
+      "path": "pages/agent/invite",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "邀请商家" }
+    },
+    {
+      "path": "pages/agent/scripts",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "推广话术" }
+    },
+    {
+      "path": "pages/agent/announcements",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "平台公告" }
+    },
+    {
+      "path": "pages/agent/article-detail",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "内容详情" }
+    },
+    {
+      "path": "pages/agent/notifications",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "消息通知" }
+    },
+    {
+      "path": "pages/agent/income",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "我的收益" }
+    },
+    {
+      "path": "pages/agent/withdraw",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "申请提现" }
+    },
+    {
+      "path": "pages/agent/payment-password-reset",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "找回支付密码" }
+    },
+    {
+      "path": "pages/agent/bank-cards",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "银行卡管理" }
+    },
+    {
+      "path": "pages/agent/add-bank-card",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "添加银行卡" }
+    },
+    {
+      "path": "pages/agent/verify-bank-card",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "安全验证" }
+    },
+    {
+      "path": "pages/agent/income-details",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "收益明细" }
+    },
+    {
+      "path": "pages/agent/merchants",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "我的商家" }
+    },
+    {
+      "path": "pages/agent/merchant-detail",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "商家详情" }
+    },
+    {
+      "path": "pages/agent/profile",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "我的" }
+    },
+    {
       "path": "pages/index/index",
       "style": {
         "navigationBarTitleText": "App Template",
