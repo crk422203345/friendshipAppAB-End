@@ -1,7 +1,7 @@
 <template>
   <view class="tabbar">
     <view v-for="item in items" :key="item.path" class="tab" :class="{ active: active === item.key }" @tap="navigate(item.path)">
-      <text class="tab-icon">{{ item.icon }}</text><text>{{ item.name }}</text>
+      <text class="tab-icon iconfont" :class="iconClass(item.key)" /><text>{{ item.name }}</text>
     </view>
   </view>
 </template>
@@ -14,6 +14,13 @@ const items = [
   { key: 'income', name: '我的收益', icon: '◉', path: '/pages/agent/income' },
   { key: 'profile', name: '我的', icon: '◡', path: '/pages/agent/profile' }
 ]
+const iconClasses = {
+  home: 'icon-shouyechangguishouye-copy-copy',
+  merchants: 'icon-shangjia',
+  income: 'icon-shouyi',
+  profile: 'icon-wode'
+}
+function iconClass(key) { return iconClasses[key] }
 function navigate(path) { uni.reLaunch({ url: path }) }
 </script>
 

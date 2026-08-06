@@ -9,6 +9,7 @@ onLaunch(() => {
 
 <style lang="scss">
 @import 'uview-pro/index.scss';
+@import './static/iconfont/iconfont.css';
 
 page {
   min-height: 100%;
