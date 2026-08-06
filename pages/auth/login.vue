@@ -46,8 +46,8 @@
 
       <view v-if="portal.showOnboarding" class="onboarding" @tap="goOnboarding">
         <view>
-          <text class="onboarding-title">暂未开通商家账号？</text>
-          <text class="onboarding-copy">联系专属代理人，获取邀请链接或协助开店</text>
+          <text class="onboarding-title">开店指引</text>
+          <text class="onboarding-copy">扫码注册店铺，或查看专属代理人联系方式</text>
         </view>
         <text class="arrow">›</text>
       </view>

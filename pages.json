@@ -35,6 +35,14 @@
       }
     },
     {
+      "path": "pages/auth/merchant-scan",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "扫一扫" }
+    },
+    {
+      "path": "pages/auth/merchant-contact",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "联系方式" }
+    },
+    {
       "path": "pages/merchant/home",
       "style": {
         "navigationStyle": "custom",
