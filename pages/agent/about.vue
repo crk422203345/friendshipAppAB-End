@@ -1,21 +1,22 @@
 <template>
   <view class="about-page">
-    <view class="nav"><text class="back" @tap="back">‹</text><text>关于我们</text><view /></view>
+    <page-nav title="关于我们" />
     <view class="content">
       <view class="brand"><image src="/static/logo.png" mode="aspectFit" /><text>Friendship</text><text>让合作更简单</text><text>Version 1.0.0</text></view>
-      <view class="menu-card"><view v-for="item in items" :key="item.name" class="menu-row" @tap="handle(item.action)"><text>{{ item.name }}</text><view class="chevron" /></view></view>
+      <menu-list :items="items" @select="handle" />
       <text class="copyright">© 2026 Friendship · All rights reserved</text>
     </view>
   </view>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
-import { enforcePortal } from '../../core/route-guard'
+import PageNav from '../../components/page-nav.vue'
+import MenuList from '../../components/menu-list.vue'
+import { usePortalGuard } from '../../composables/use-portal-guard'
 const items = [{ name: '检查版本更新', action: 'version' }, { name: '服务协议', action: 'service' }, { name: '隐私政策', action: 'privacy' }, { name: '官方网站', action: 'website' }]
-onMounted(() => enforcePortal('agent'))
-function back() { uni.navigateBack() }
-function handle(action) {
+usePortalGuard('agent')
+function handle(item) {
+  const { action } = item
   if (action === 'version') { uni.showToast({ title: '当前已是最新版本', icon: 'none' }); return }
   if (action === 'website') { uni.setClipboardData({ data: 'https://friendship.example.com', success: () => uni.showToast({ title: '官网地址已复制', icon: 'success' }) }); return }
   uni.showModal({ title: action === 'service' ? '服务协议' : '隐私政策', content: '相关内容将在正式服务上线后提供，请以平台最新公示为准。', showCancel: false })

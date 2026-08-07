@@ -1,6 +1,6 @@
 <template>
   <view class="sub-page">
-    <view class="nav"><text class="back" @tap="back">‹</text><text>操作教程</text><view /></view>
+    <page-nav title="操作教程" />
     <view class="content">
       <view class="tab-switch"><text :class="{ active: activeTab === 'video' }" @tap="activeTab = 'video'">视频</text><text :class="{ active: activeTab === 'article' }" @tap="activeTab = 'article'">图文</text></view>
       <view v-if="activeTab === 'video'" class="video-section"><view class="video-cover" @tap="playVideo"><view class="play">▶</view><view class="video-caption"><text>新手指南 · 3 分钟快速上手</text><text>了解邀请商家、收益查看与结算流程</text></view></view><view class="video-tip"><text>视频教程</text><text>点击封面开始播放</text></view></view>
@@ -10,8 +10,9 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
-import { enforcePortal } from '../../core/route-guard'
+import { ref } from 'vue'
+import PageNav from '../../components/page-nav.vue'
+import { usePortalGuard } from '../../composables/use-portal-guard'
 
 const activeTab = ref('video')
 const articles = [
@@ -20,8 +21,7 @@ const articles = [
   { id: 3, title: '第三步：等待平台审核', copy: '审核状态会同步至商家侧与代理人工作台。' },
   { id: 4, title: '第四步：收益查看与银行卡提现流程', copy: '查看结算明细、绑定银行卡并提交提现申请。' }
 ]
-onMounted(() => enforcePortal('agent'))
-function back() { uni.navigateBack() }
+usePortalGuard('agent')
 function playVideo() { uni.showToast({ title: '教程视频资源准备中', icon: 'none' }) }
 function goDetail(id) { uni.navigateTo({ url: `/pages/agent/tutorial-detail?id=${id}` }) }
 </script>

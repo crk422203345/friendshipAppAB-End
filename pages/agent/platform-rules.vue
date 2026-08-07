@@ -1,6 +1,6 @@
 <template>
   <view class="sub-page">
-    <view class="nav"><text class="back" @tap="back">‹</text><text>平台规则</text><view /></view>
+    <page-nav title="平台规则" />
     <view class="content">
       <scroll-view scroll-x class="tabs"><view class="tabs-inner"><text v-for="item in ruleSets" :key="item.key" :class="{ active: activeKey === item.key }" @tap="activeKey = item.key">{{ item.name }}</text></view></scroll-view>
       <view class="rule-card"><text class="rule-title">{{ current.title }}</text><text class="rule-intro">{{ current.intro }}</text><view v-for="(item, index) in current.items" :key="item.title" class="rule-item"><view class="number">{{ index + 1 }}</view><view><text>{{ item.title }}</text><text>{{ item.copy }}</text></view></view></view>
@@ -10,8 +10,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { enforcePortal } from '../../core/route-guard'
+import { computed, ref } from 'vue'
+import PageNav from '../../components/page-nav.vue'
+import { usePortalGuard } from '../../composables/use-portal-guard'
 
 const activeKey = ref('commission')
 const ruleSets = [
@@ -20,8 +21,7 @@ const ruleSets = [
   { key: 'settlement', name: '结算规范', title: '资金结算与提现规范', intro: '提现申请将根据绑定银行卡与风险校验结果进行处理。', items: [{ title: '银行卡信息', copy: '请使用本人有效银行卡，并妥善保管账户信息。' }, { title: '提现处理', copy: '提交申请后请耐心等待处理，到账时间以银行通知为准。' }, { title: '风险控制', copy: '平台可能对异常交易进行核验或延迟结算。' }] }
 ]
 const current = computed(() => ruleSets.find((item) => item.key === activeKey.value))
-onMounted(() => enforcePortal('agent'))
-function back() { uni.navigateBack() }
+usePortalGuard('agent')
 </script>
 
 <style lang="scss" scoped>

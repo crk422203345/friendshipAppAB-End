@@ -1,10 +1,6 @@
 <template>
   <view class="detail-page">
-    <view class="nav">
-      <view class="nav-back" @tap="back"><text>‹</text></view>
-      <text class="nav-title">收支明细</text>
-      <view class="nav-placeholder" />
-    </view>
+    <page-nav title="收支明细" />
 
     <scroll-view class="page-body" scroll-y>
       <view class="overview-card">
@@ -32,11 +28,7 @@
         </view>
       </view>
 
-      <view v-else class="empty-state">
-        <view class="empty-icon">¥</view>
-        <text>当月暂无收支明细</text>
-        <text class="empty-tip">选择其他月份查看历史收益</text>
-      </view>
+      <empty-state v-else icon="¥" title="当月暂无收支明细" description="选择其他月份查看历史收益" />
     </scroll-view>
 
     <view v-if="pickerVisible" class="picker-mask" @tap="closePicker">
@@ -62,8 +54,10 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { enforcePortal } from '../../core/route-guard'
+import { computed, ref } from 'vue'
+import EmptyState from '../../components/empty-state.vue'
+import PageNav from '../../components/page-nav.vue'
+import { usePortalGuard } from '../../composables/use-portal-guard'
 
 const now = new Date()
 const currentYear = now.getFullYear()
@@ -122,12 +116,11 @@ const incomeRecords = {
   ]
 }
 
-onMounted(() => enforcePortal('agent'))
+usePortalGuard('agent')
 
 function monthKey(year, month) { return `${year}-${String(month).padStart(2, '0')}` }
 function previousMonth(year, month) { return month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 } }
 function formatAmount(amount) { return Number(amount).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
-function back() { uni.navigateBack() }
 function openPicker() {
   draftYear.value = selectedMonth.value.year
   draftMonth.value = selectedMonth.value.month

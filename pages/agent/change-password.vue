@@ -1,6 +1,6 @@
 <template>
   <view class="password-page">
-    <view class="nav"><text class="back" @tap="back">‹</text><text>修改密码</text><view /></view>
+    <page-nav title="修改密码" />
     <view class="content">
       <view class="hero"><view class="lock">⌑</view><text>设置新的登录密码</text><text>修改成功后需要重新登录</text></view>
       <view class="form-card">
@@ -15,8 +15,10 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { enforcePortal } from '../../core/route-guard'
+import { computed, ref } from 'vue'
+import PageNav from '../../components/page-nav.vue'
+import { usePortalGuard } from '../../composables/use-portal-guard'
+import { useVerificationCountdown } from '../../composables/use-verification-countdown'
 import { clearSession, session } from '../../core/session'
 import { resetPassword, sendEmailCode } from '../../services/auth'
 
@@ -24,20 +26,15 @@ const email = computed(() => session.user?.email || '12121212@qq.com')
 const password = ref('')
 const code = ref('')
 const showPassword = ref(false)
-const countdown = ref(0)
 const submitting = ref(false)
-let timer
+const { countdown, start } = useVerificationCountdown()
 const canSubmit = computed(() => /^(?=.*[A-Za-z])(?=.*\d).{8,20}$/.test(password.value) && /^\d{6}$/.test(code.value))
-onMounted(() => enforcePortal('agent'))
-onBeforeUnmount(() => clearInterval(timer))
-function back() { uni.navigateBack() }
+usePortalGuard('agent')
 async function sendCode() {
   if (countdown.value) return
   try {
     await sendEmailCode({ email: email.value, purpose: 'reset-password', portal: 'agent' })
-    countdown.value = 60
-    clearInterval(timer)
-    timer = setInterval(() => { countdown.value -= 1; if (!countdown.value) clearInterval(timer) }, 1000)
+    start()
     uni.showToast({ title: '验证码已发送，请注意查收', icon: 'none' })
   } catch (error) { uni.showToast({ title: error.message, icon: 'none' }) }
 }

@@ -1,14 +1,15 @@
 <template>
   <view class="detail-page">
-    <view class="nav"><text class="back" @tap="back">‹</text><text>操作教程</text><view /></view>
+    <page-nav title="操作教程" />
     <scroll-view class="body" scroll-y><text class="title">{{ article.title }}</text><text class="date">更新时间：2026-08-07</text><view class="cover"><text>{{ article.badge }}</text></view><view class="article-content"><text v-for="item in article.paragraphs" :key="item">{{ item }}</text></view><view class="notice"><text>!</text><text>本教程内容仅供平台业务操作参考，请以页面实际提示和平台规则为准。</text></view></scroll-view>
   </view>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { enforcePortal } from '../../core/route-guard'
+import PageNav from '../../components/page-nav.vue'
+import { usePortalGuard } from '../../composables/use-portal-guard'
 
 const id = ref(1)
 const articles = {
@@ -19,8 +20,7 @@ const articles = {
 }
 const article = computed(() => articles[id.value] || articles[1])
 onLoad((options) => { id.value = Number(options?.id) || 1 })
-onMounted(() => enforcePortal('agent'))
-function back() { uni.navigateBack() }
+usePortalGuard('agent')
 </script>
 
 <style lang="scss" scoped>

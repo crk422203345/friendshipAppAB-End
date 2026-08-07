@@ -1,6 +1,6 @@
 <template>
   <view class="detail-page">
-    <view class="nav"><text class="back" @tap="back">‹</text><text>个人资料</text><view /></view>
+    <page-nav title="个人资料" />
     <view class="content">
       <view class="avatar-panel" @tap="chooseAvatar">
         <image v-if="session.user?.avatar" class="avatar-image" :src="session.user.avatar" mode="aspectFill" />
@@ -16,8 +16,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
-import { enforcePortal } from '../../core/route-guard'
+import { computed } from 'vue'
+import PageNav from '../../components/page-nav.vue'
+import { usePortalGuard } from '../../composables/use-portal-guard'
 import { session, updateSessionUser } from '../../core/session'
 
 const first = computed(() => (session.user?.name || '张三').slice(0, 1))
@@ -27,8 +28,7 @@ const details = computed(() => [
   { label: '邮箱', value: session.user?.email || '12121212@qq.com', copyable: true },
   { label: '手机号', value: session.user?.phone || '暂未绑定' }
 ])
-onMounted(() => enforcePortal('agent'))
-function back() { uni.navigateBack() }
+usePortalGuard('agent')
 function copy(item) { if (item.copyable) uni.setClipboardData({ data: item.value, success: () => uni.showToast({ title: '已复制', icon: 'success' }) }) }
 function chooseAvatar() {
   uni.chooseImage({

@@ -11,14 +11,10 @@
       </view>
 
       <view class="section-label">帮助与指南</view>
-      <view class="menu-card">
-        <view v-for="item in guideMenus" :key="item.path" class="menu-row" @tap="go(item.path)"><view class="menu-icon">{{ item.icon }}</view><text>{{ item.name }}</text><view class="chevron" /></view>
-      </view>
+      <menu-list :items="guideMenus" @select="go" />
 
       <view class="section-label">设置</view>
-      <view class="menu-card">
-        <view v-for="item in settingMenus" :key="item.path" class="menu-row" @tap="go(item.path)"><view class="menu-icon">{{ item.icon }}</view><text>{{ item.name }}</text><view class="chevron" /></view>
-      </view>
+      <menu-list :items="settingMenus" @select="go" />
 
       <button class="logout" @tap="confirmLogout">退出登录</button>
     </view>
@@ -27,9 +23,10 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import AgentTabbar from '../../components/agent-tabbar.vue'
-import { enforcePortal } from '../../core/route-guard'
+import MenuList from '../../components/menu-list.vue'
+import { usePortalGuard } from '../../composables/use-portal-guard'
 import { clearSession, session } from '../../core/session'
 
 const guideMenus = [
@@ -43,8 +40,8 @@ const settingMenus = [
 ]
 const first = computed(() => (session.user?.name || '张三').slice(0, 1))
 
-onMounted(() => enforcePortal('agent'))
-function go(path) { uni.navigateTo({ url: path }) }
+usePortalGuard('agent')
+function go(item) { uni.navigateTo({ url: item.path }) }
 function confirmLogout() {
   uni.showModal({
     title: '确认退出登录？',

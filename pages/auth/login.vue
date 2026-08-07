@@ -68,8 +68,9 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import { useVerificationCountdown } from '../../composables/use-verification-countdown'
 import { getPortal, PORTAL_AGENT, PORTAL_MERCHANT } from '../../config/portals'
 import { setSession } from '../../core/session'
 import { login, sendEmailCode } from '../../services/auth'
@@ -79,18 +80,15 @@ const loginType = ref('code')
 const email = ref('')
 const password = ref('')
 const code = ref('')
-const countdown = ref(0)
 const submitting = ref(false)
 const quickSubmitting = ref(false)
-let countdownTimer
+const { countdown, start } = useVerificationCountdown()
 
 const portal = computed(() => getPortal(portalCode.value))
 
 onLoad((options) => {
   if (options?.portal === PORTAL_AGENT) portalCode.value = PORTAL_AGENT
 })
-
-onBeforeUnmount(() => clearInterval(countdownTimer))
 
 function setLoginType(type) {
   loginType.value = type
@@ -100,12 +98,7 @@ async function sendCode() {
   if (countdown.value) return
   try {
     await sendEmailCode({ email: email.value, purpose: 'login', portal: portalCode.value })
-    countdown.value = 60
-    clearInterval(countdownTimer)
-    countdownTimer = setInterval(() => {
-      countdown.value -= 1
-      if (!countdown.value) clearInterval(countdownTimer)
-    }, 1000)
+    start()
     uni.showToast({ title: '验证码已发送（演示码：123456）', icon: 'none' })
   } catch (error) {
     uni.showToast({ title: error.message, icon: 'none' })

@@ -1,19 +1,21 @@
 <template>
   <view class="sub-page">
-    <view class="nav"><text class="back" @tap="back">‹</text><text>常见问题</text><view /></view>
+    <page-nav title="常见问题" />
     <view class="content">
       <view class="search"><text>⌕</text><input v-model="keyword" placeholder="搜索问题关键词" placeholder-class="placeholder" /><text v-if="keyword" class="clear" @tap="keyword = ''">×</text></view>
       <scroll-view scroll-x class="tabs"><view class="tabs-inner"><text v-for="item in categories" :key="item" :class="{ active: activeCategory === item }" @tap="activeCategory = item">{{ item }}</text></view></scroll-view>
       <view v-if="filteredQuestions.length" class="question-list"><view v-for="item in filteredQuestions" :key="item.id" class="question" @tap="toggle(item.id)"><view class="question-title"><text>{{ item.title }}</text><text class="arrow" :class="{ expanded: expandedId === item.id }">⌄</text></view><text v-if="expandedId === item.id" class="answer">{{ item.answer }}</text></view></view>
-      <view v-else class="empty">没有找到相关问题</view>
+      <empty-state v-else icon="?" title="没有找到相关问题" description="换个关键词再试试" />
       <button class="support" @tap="contactSupport"><text>◌</text>没有找到答案？联系在线客服</button>
     </view>
   </view>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { enforcePortal } from '../../core/route-guard'
+import { computed, ref } from 'vue'
+import EmptyState from '../../components/empty-state.vue'
+import PageNav from '../../components/page-nav.vue'
+import { usePortalGuard } from '../../composables/use-portal-guard'
 
 const categories = ['全部', '入驻流程', '提现收益', '商家核销']
 const activeCategory = ref('全部')
@@ -30,8 +32,7 @@ const filteredQuestions = computed(() => {
   const term = keyword.value.trim()
   return questions.filter((item) => (activeCategory.value === '全部' || item.category === activeCategory.value) && (!term || `${item.title}${item.answer}`.includes(term)))
 })
-onMounted(() => enforcePortal('agent'))
-function back() { uni.navigateBack() }
+usePortalGuard('agent')
 function toggle(id) { expandedId.value = expandedId.value === id ? null : id }
 function contactSupport() { uni.showActionSheet({ itemList: ['在线客服', '拨打客服热线 400-888-10086'], success: ({ tapIndex }) => uni.showToast({ title: tapIndex ? '客服热线已复制' : '在线客服接入中', icon: 'none' }) }) }
 </script>
