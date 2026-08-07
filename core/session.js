@@ -35,6 +35,16 @@ export function setSession({ token, user, portal = '', permissions = [] }) {
   })
 }
 
+export function updateSessionUser(patch) {
+  state.user = { ...(state.user || {}), ...patch }
+  setStorage(SESSION_KEY, {
+    token: state.token,
+    user: state.user,
+    portal: state.portal,
+    permissions: state.permissions
+  })
+}
+
 export function clearSession() {
   state.token = ''
   state.user = null

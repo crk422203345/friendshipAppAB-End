@@ -2,8 +2,7 @@
   font-family: "iconfont"; /* Project id 5220163 */
   src: url('iconfont.woff2?t=1785984173906') format('woff2'),
        url('iconfont.woff?t=1785984173906') format('woff'),
-       url('iconfont.ttf?t=1785984173906') format('truetype'),
-       url('iconfont.svg?t=1785984173906#iconfont') format('svg');
+       url('iconfont.ttf?t=1785984173906') format('truetype');
 }
 
 .iconfont {
@@ -37,4 +36,3 @@
 .icon-shouyechangguishouye-copy-copy:before {
   content: "\e600";
 }
-
