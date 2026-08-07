@@ -41,7 +41,7 @@ const settingMenus = [
 const first = computed(() => (session.user?.name || '张三').slice(0, 1))
 
 usePortalGuard('agent')
-function go(item) { uni.navigateTo({ url: item.path }) }
+function go(item) { uni.navigateTo({ url: typeof item === 'string' ? item : item.path }) }
 function confirmLogout() {
   uni.showModal({
     title: '确认退出登录？',
