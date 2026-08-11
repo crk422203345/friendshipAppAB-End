@@ -16,11 +16,43 @@
 <script setup>
 function goBack() { uni.navigateBack() }
 function startScan() {
+  // #ifdef H5
+  uni.showModal({
+    title: '当前环境不支持直接扫码',
+    content: '请使用 App 或微信小程序打开扫一扫。',
+    showCancel: false
+  })
+  return
+  // #endif
+
   uni.scanCode({
     onlyFromCamera: false,
-    success: () => uni.showToast({ title: '已识别邀请二维码', icon: 'success' }),
+    scanType: ['qrCode'],
+    success: ({ result }) => {
+      const inviteCode = parseInviteCode(result)
+      if (!inviteCode) {
+        uni.showToast({ title: '无效的开店邀请二维码', icon: 'none' })
+        return
+      }
+      uni.setStorageSync('merchant-pending-invite', inviteCode)
+      uni.showToast({ title: '已识别开店邀请', icon: 'success' })
+      setTimeout(goBack, 700)
+    },
     fail: (error) => { if (!String(error.errMsg || '').includes('cancel')) uni.showToast({ title: '未能识别二维码，请重试', icon: 'none' }) }
   })
+}
+
+function parseInviteCode(result) {
+  const raw = String(result || '').trim()
+  if (!raw) return ''
+  const match = raw.match(/[?&](?:inviteCode|code)=([^&]+)/i)
+  let value = raw
+  try {
+    if (match) value = decodeURIComponent(match[1])
+  } catch {
+    return ''
+  }
+  return /^[A-Za-z0-9_-]{6,128}$/.test(value) ? value : ''
 }
 </script>
 

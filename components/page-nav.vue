@@ -7,8 +7,23 @@
 </template>
 
 <script setup>
-defineProps({ title: { type: String, required: true } })
-function goBack() { uni.navigateBack() }
+import { getPortalHome } from '../config/portals'
+import { session } from '../core/session'
+
+const props = defineProps({
+  title: { type: String, required: true },
+  fallbackUrl: { type: String, default: '' }
+})
+
+function goBack() {
+  const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
+  if (pages.length > 1) {
+    uni.navigateBack()
+    return
+  }
+  const fallbackUrl = props.fallbackUrl || (session.token ? getPortalHome(session.portal) : '/pages/auth/login')
+  uni.reLaunch({ url: fallbackUrl })
+}
 </script>
 
 <style scoped>

@@ -1,6 +1,6 @@
-import { onMounted } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { enforcePortal } from '../core/route-guard'
 
 export function usePortalGuard(portal) {
-  onMounted(() => enforcePortal(portal))
+  onLoad(() => enforcePortal(portal))
 }

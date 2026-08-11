@@ -27,6 +27,7 @@ import { computed } from 'vue'
 import AgentTabbar from '../../components/agent-tabbar.vue'
 import MenuList from '../../components/menu-list.vue'
 import { usePortalGuard } from '../../composables/use-portal-guard'
+import { openPage } from '../../core/navigation'
 import { clearSession, session } from '../../core/session'
 
 const guideMenus = [
@@ -41,7 +42,7 @@ const settingMenus = [
 const first = computed(() => (session.user?.name || '张三').slice(0, 1))
 
 usePortalGuard('agent')
-function go(item) { uni.navigateTo({ url: typeof item === 'string' ? item : item.path }) }
+function go(item) { openPage(item) }
 function confirmLogout() {
   uni.showModal({
     title: '确认退出登录？',

@@ -8,6 +8,7 @@ const state = reactive({
   user: null,
   portal: '',
   permissions: [],
+  expiresAt: 0,
   hydrated: false
 })
 
@@ -19,19 +20,23 @@ export function hydrateSession() {
   state.user = savedSession.user || null
   state.portal = savedSession.portal || ''
   state.permissions = Array.isArray(savedSession.permissions) ? savedSession.permissions : []
+  state.expiresAt = Number(savedSession.expiresAt) || 0
   state.hydrated = true
+  if (state.token && state.expiresAt && state.expiresAt <= Date.now()) clearSession()
 }
 
-export function setSession({ token, user, portal = '', permissions = [] }) {
+export function setSession({ token, user, portal = '', permissions = [], expiresAt = 0 }) {
   state.token = token || ''
   state.user = user || null
   state.portal = portal || ''
   state.permissions = Array.isArray(permissions) ? permissions : []
+  state.expiresAt = Number(expiresAt) || 0
   setStorage(SESSION_KEY, {
     token: state.token,
     user: state.user,
     portal: state.portal,
-    permissions: state.permissions
+    permissions: state.permissions,
+    expiresAt: state.expiresAt
   })
 }
 
@@ -41,7 +46,8 @@ export function updateSessionUser(patch) {
     token: state.token,
     user: state.user,
     portal: state.portal,
-    permissions: state.permissions
+    permissions: state.permissions,
+    expiresAt: state.expiresAt
   })
 }
 
@@ -50,5 +56,6 @@ export function clearSession() {
   state.user = null
   state.portal = ''
   state.permissions = []
+  state.expiresAt = 0
   removeStorage(SESSION_KEY)
 }

@@ -16,7 +16,8 @@
     "build:app:c": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=c uni build -p app",
     "build:h5": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=template uni build",
     "build:mp-weixin": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=template uni build -p mp-weixin",
-    "verify": "npm run build:mp-weixin",
+    "verify:routes": "node scripts/verify-routes.mjs",
+    "verify": "npm run verify:routes && npm run build:mp-weixin",
     "test": "npm run verify"
   },
   "repository": {

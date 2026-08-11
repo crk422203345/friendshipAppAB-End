@@ -27,15 +27,14 @@ const password = ref('')
 const code = ref('')
 const showPassword = ref(false)
 const submitting = ref(false)
-const { countdown, start } = useVerificationCountdown()
+const { countdown, execute: sendWithCountdown } = useVerificationCountdown()
 const canSubmit = computed(() => /^(?=.*[A-Za-z])(?=.*\d).{8,20}$/.test(password.value) && /^\d{6}$/.test(code.value))
 usePortalGuard('agent')
 async function sendCode() {
   if (countdown.value) return
   try {
-    await sendEmailCode({ email: email.value, purpose: 'reset-password', portal: 'agent' })
-    start()
-    uni.showToast({ title: '验证码已发送，请注意查收', icon: 'none' })
+    const sent = await sendWithCountdown(() => sendEmailCode({ email: email.value, purpose: 'reset-password', portal: 'agent' }))
+    if (sent) uni.showToast({ title: '验证码已发送，请注意查收', icon: 'none' })
   } catch (error) { uni.showToast({ title: error.message, icon: 'none' }) }
 }
 async function submit() {

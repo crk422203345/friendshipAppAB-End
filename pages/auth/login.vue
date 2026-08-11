@@ -82,7 +82,7 @@ const password = ref('')
 const code = ref('')
 const submitting = ref(false)
 const quickSubmitting = ref(false)
-const { countdown, start } = useVerificationCountdown()
+const { countdown, execute: sendWithCountdown } = useVerificationCountdown()
 
 const portal = computed(() => getPortal(portalCode.value))
 
@@ -97,9 +97,8 @@ function setLoginType(type) {
 async function sendCode() {
   if (countdown.value) return
   try {
-    await sendEmailCode({ email: email.value, purpose: 'login', portal: portalCode.value })
-    start()
-    uni.showToast({ title: '验证码已发送（演示码：123456）', icon: 'none' })
+    const sent = await sendWithCountdown(() => sendEmailCode({ email: email.value, purpose: 'login', portal: portalCode.value }))
+    if (sent) uni.showToast({ title: '验证码已发送（演示码：123456）', icon: 'none' })
   } catch (error) {
     uni.showToast({ title: error.message, icon: 'none' })
   }

@@ -1,9 +1,21 @@
 <script setup>
 import { onLaunch } from '@dcloudio/uni-app'
-import { hydrateSession } from './core/session'
+import { setUnauthorizedHandler } from './core/http'
+import { clearSession, hydrateSession } from './core/session'
+
+let redirectingToLogin = false
 
 onLaunch(() => {
   hydrateSession()
+  setUnauthorizedHandler(() => {
+    clearSession()
+    if (redirectingToLogin) return
+    redirectingToLogin = true
+    uni.reLaunch({
+      url: '/pages/auth/login',
+      complete: () => setTimeout(() => { redirectingToLogin = false }, 300)
+    })
+  })
 })
 </script>
 

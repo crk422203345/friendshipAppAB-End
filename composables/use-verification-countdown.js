@@ -2,6 +2,7 @@ import { onBeforeUnmount, ref } from 'vue'
 
 export function useVerificationCountdown(seconds = 60) {
   const countdown = ref(0)
+  const pending = ref(false)
   let timer
 
   function start() {
@@ -15,6 +16,18 @@ export function useVerificationCountdown(seconds = 60) {
     return true
   }
 
+  async function execute(request) {
+    if (countdown.value || pending.value || typeof request !== 'function') return false
+    pending.value = true
+    try {
+      await request()
+      start()
+      return true
+    } finally {
+      pending.value = false
+    }
+  }
+
   onBeforeUnmount(() => clearInterval(timer))
-  return { countdown, start }
+  return { countdown, pending, start, execute }
 }
