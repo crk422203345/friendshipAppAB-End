@@ -6,8 +6,8 @@
           ><view class="avatar">{{ firstLetter }}</view
           ><view
             ><text class="greeting"
-              >{{ greeting }}，{{ session.user?.name || "张三" }}</text
-            ><text class="agent-id">ID：AG10086</text></view
+              >{{ greeting }}，{{ agent.name || "代理人" }}</text
+            ><text class="agent-id">ID：{{ agent.agentNo || "—" }}</text></view
           ></view
         ><view class="bell" @tap="go('/pages/agent/notifications')"
           ><text class="bell-icon iconfont icon-lingdang-xianxing" /><i
@@ -15,11 +15,11 @@
       ></view>
       <view class="metric-grid"
         ><view class="metric"
-          ><text class="metric-value">5</text
+          ><text class="metric-value">{{ dashboard.boundMerchantCount }}</text
           ><text class="metric-label">已绑定商家</text></view
         ><view class="metric income"
-          ><text class="metric-value">¥3,702</text
-          ><text class="metric-label">本月预估佣金</text></view
+          ><text class="metric-value">¥{{ formatAmount(dashboard.monthlyCommission) }}</text
+          ><text class="metric-label">{{ dashboard.commissionLabel }}</text></view
         ></view
       >
       <view class="commission-note"
@@ -64,23 +64,75 @@
 import { computed, onMounted, ref } from "vue";
 import AgentTabbar from "../../components/agent-tabbar.vue";
 import { enforcePortal } from "../../core/route-guard";
-import { session } from "../../core/session";
+import { session, updateSessionUser } from "../../core/session";
+import { getAnnouncements, getDashboard, getNotificationUnreadCount, listOf, unwrap } from "../../services/agent";
 const nowHour = new Date().getHours();
-const greeting = computed(() =>
-  nowHour < 12 ? "上午好" : nowHour < 18 ? "下午好" : "晚上好"
-);
-const firstLetter = computed(() => (session.user?.name || "张").slice(0, 1));
-const hasUnread = ref(true);
+const serverGreeting = ref("");
+const greeting = computed(() => serverGreeting.value || (nowHour < 12 ? "上午好" : nowHour < 18 ? "下午好" : "晚上好"));
+const remoteAgent = ref(null);
+const agent = computed(() => remoteAgent.value || {
+  name: session.user?.name || "",
+  agentNo: session.user?.agentId || session.user?.agent_no || ""
+});
+const firstLetter = computed(() => String(agent.value.name || "?").slice(0, 1));
+const hasUnread = ref(false);
+const dashboard = ref({ boundMerchantCount: 0, monthlyCommission: 0, commissionLabel: "累计佣金" });
 const quickActions = [
   { icon: "♙", name: "邀请商家", path: "/pages/agent/invite" },
   { icon: "▤", name: "收益明细", path: "/pages/agent/income" },
   { icon: "⌁", name: "推广话术", path: "/pages/agent/scripts" },
 ];
-const notices = [
-  { id: 1, title: "单笔佣金调整通知（7月）", date: "07.20" },
-  { id: 2, title: "月度结算已到账", date: "07.15" },
-];
-onMounted(() => enforcePortal("agent"));
+const notices = ref([]);
+onMounted(async () => {
+  if (!enforcePortal("agent")) return;
+  await Promise.all([loadDashboard(), loadAnnouncements(), loadUnreadCount()]);
+});
+async function loadDashboard() {
+  try {
+    const data = unwrap(await getDashboard()) || {};
+    const statistics = data.statistics || {};
+    const profile = data.agent || {};
+    const monthlyCommission = statistics.monthly_commission_amount ?? data.monthly_commission ?? data.monthlyCommission ?? data.monthly_estimated_commission;
+    dashboard.value = {
+      boundMerchantCount: Number(statistics.online_merchant_count ?? data.bound_merchant_count ?? data.boundMerchantCount ?? data.merchant_count ?? 0),
+      monthlyCommission: Number(monthlyCommission ?? statistics.cumulative_commission_amount ?? 0),
+      commissionLabel: monthlyCommission !== undefined && monthlyCommission !== null ? "本月预估佣金" : "累计佣金"
+    };
+    serverGreeting.value = data.greeting || "";
+    if (Object.keys(profile).length) {
+      remoteAgent.value = {
+        name: profile.name || "",
+        agentNo: profile.agent_no || profile.agentNo || ""
+      };
+      updateSessionUser({ ...profile, name: remoteAgent.value.name, agentId: remoteAgent.value.agentNo });
+    }
+    if (Array.isArray(data.announcements) && data.announcements.length) {
+      notices.value = normalizeAnnouncements(data.announcements);
+    }
+  } catch (error) { console.warn('Failed to load dashboard', error); }
+}
+async function loadAnnouncements() {
+  try {
+    const items = listOf(await getAnnouncements({ page: 1, page_size: 2 }));
+    notices.value = normalizeAnnouncements(items);
+  } catch (error) { console.warn('Failed to load announcements', error); }
+}
+function normalizeAnnouncements(items) {
+  return items.map((item) => ({
+      id: item.id || item.announcement_no,
+      title: item.title || '',
+      date: String(item.published_at || item.date || item.created_at || '').slice(5, 10)
+    })).filter((item) => item.id && item.title);
+}
+async function loadUnreadCount() {
+  try {
+    const data = unwrap(await getNotificationUnreadCount()) || {};
+    hasUnread.value = Number(data.count ?? data.unread_count ?? data.unreadCount ?? 0) > 0;
+  } catch (error) { console.warn('Failed to load notification count', error); }
+}
+function formatAmount(value) {
+  return Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 function go(path) {
   if (path.includes("notifications")) hasUnread.value = false;
   uni.navigateTo({ url: path });

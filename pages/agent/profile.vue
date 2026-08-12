@@ -4,9 +4,9 @@
       <text class="page-title">我的</text>
 
       <view class="user-card" @tap="go('/pages/agent/profile-detail')">
-        <image v-if="session.user?.avatar" class="avatar-image" :src="session.user.avatar" mode="aspectFill" />
+        <image v-if="profile.avatar" class="avatar-image" :src="profile.avatar" mode="aspectFill" />
         <view v-else class="avatar">{{ first }}</view>
-        <view class="user-info"><text class="user-name">{{ session.user?.name || '张三' }}</text><text>代理人 ID：{{ session.user?.agentId || 'AG10086' }}</text><text>{{ session.user?.email || '12121212@qq.com' }}</text></view>
+        <view class="user-info"><text class="user-name">{{ profile.name || '—' }}</text><text>代理人 ID：{{ profile.agentNo || '—' }}</text><text>{{ profile.email || '—' }}</text></view>
         <view class="chevron" />
       </view>
 
@@ -16,19 +16,22 @@
       <view class="section-label">设置</view>
       <menu-list :items="settingMenus" @select="go" />
 
-      <button class="logout" @tap="confirmLogout">退出登录</button>
+      <button class="logout" :loading="loggingOut" :disabled="loggingOut" @tap="confirmLogout">退出登录</button>
     </view>
     <agent-tabbar active="profile" />
   </view>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import AgentTabbar from '../../components/agent-tabbar.vue'
 import MenuList from '../../components/menu-list.vue'
 import { usePortalGuard } from '../../composables/use-portal-guard'
 import { openPage } from '../../core/navigation'
-import { clearSession, session } from '../../core/session'
+import { clearSession, session, updateSessionUser } from '../../core/session'
+import { getCurrentAccount, unwrap } from '../../services/agent'
+import { logout } from '../../services/auth'
 
 const guideMenus = [
   { name: '常见问题', icon: '?', path: '/pages/agent/faq' },
@@ -39,17 +42,58 @@ const settingMenus = [
   { name: '修改密码', icon: '↻', path: '/pages/agent/change-password' },
   { name: '关于我们', icon: 'i', path: '/pages/agent/about' }
 ]
-const first = computed(() => (session.user?.name || '张三').slice(0, 1))
+const remoteProfile = ref(null)
+const loggingOut = ref(false)
+const profile = computed(() => remoteProfile.value || {
+  name: session.user?.name || '',
+  agentNo: session.user?.agentId || session.user?.agent_no || '',
+  email: session.user?.email || session.user?.username || '',
+  avatar: session.user?.avatar || session.user?.avatar_url || ''
+})
+const first = computed(() => String(profile.value.name || '?').slice(0, 1))
 
 usePortalGuard('agent')
+onShow(loadProfile)
+
+async function loadProfile() {
+  try {
+    const data = unwrap(await getCurrentAccount()) || {}
+    const agent = data.agent || data.account?.agent || {}
+    const user = data.user || data.account?.user || {}
+    remoteProfile.value = {
+      name: agent.name || '',
+      agentNo: agent.agent_no || agent.agentNo || '',
+      email: agent.email || user.email || user.username || '',
+      avatar: agent.avatar_url || agent.avatarUrl || agent.avatar || ''
+    }
+    updateSessionUser({
+      ...agent,
+      name: remoteProfile.value.name,
+      agentId: remoteProfile.value.agentNo,
+      email: remoteProfile.value.email,
+      avatar: remoteProfile.value.avatar
+    })
+  } catch (error) {
+    if (!session.user) uni.showToast({ title: error.message || '个人资料加载失败', icon: 'none' })
+  }
+}
+
 function go(item) { openPage(item) }
 function confirmLogout() {
   uni.showModal({
     title: '确认退出登录？',
     content: '退出后需要重新登录才能继续使用。',
     confirmText: '退出登录',
-    success: ({ confirm }) => { if (confirm) { clearSession(); uni.reLaunch({ url: '/pages/auth/login?portal=agent' }) } }
+    success: ({ confirm }) => { if (confirm) performLogout() }
   })
+}
+
+async function performLogout() {
+  if (loggingOut.value) return
+  loggingOut.value = true
+  try { await logout() } catch { /* 服务端会话失效时仍需清除本地登录状态。 */ }
+  clearSession()
+  uni.reLaunch({ url: '/pages/auth/login?portal=agent' })
 }
 </script>
 

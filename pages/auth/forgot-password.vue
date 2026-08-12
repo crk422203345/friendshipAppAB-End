@@ -21,8 +21,8 @@ import { resetPassword, sendEmailCode } from '../../services/auth'
 const portal = ref('merchant'); const email = ref(''); const password = ref(''); const code = ref(''); const countdown = ref(0); const submitting = ref(false); let timer
 onLoad((options) => { if (options?.portal === 'agent') portal.value = 'agent' })
 onBeforeUnmount(() => clearInterval(timer))
-async function sendCode() { if (countdown.value) return; try { await sendEmailCode({ email: email.value, purpose: 'reset-password', portal: portal.value }); countdown.value = 60; timer = setInterval(() => { countdown.value -= 1; if (!countdown.value) clearInterval(timer) }, 1000); uni.showToast({ title: '验证码已发送（演示码：123456）', icon: 'none' }) } catch (error) { uni.showToast({ title: error.message, icon: 'none' }) } }
-async function submit() { submitting.value = true; try { await resetPassword({ email: email.value, password: password.value, code: code.value }); uni.showToast({ title: '密码已重置，请登录', icon: 'success' }); setTimeout(goBack, 800) } catch (error) { uni.showToast({ title: error.message, icon: 'none' }) } finally { submitting.value = false } }
+async function sendCode() { if (countdown.value) return; try { await sendEmailCode({ email: email.value, purpose: 'reset-password', portal: portal.value }); countdown.value = 60; timer = setInterval(() => { countdown.value -= 1; if (!countdown.value) clearInterval(timer) }, 1000); uni.showToast({ title: '验证码已发送，请注意查收', icon: 'none' }) } catch (error) { uni.showToast({ title: error.message, icon: 'none' }) } }
+async function submit() { if (submitting.value) return; submitting.value = true; try { await resetPassword({ email: email.value, password: password.value, code: code.value }); uni.showToast({ title: '密码已重置，请登录', icon: 'success' }); setTimeout(goBack, 800) } catch (error) { uni.showToast({ title: error.message, icon: 'none' }) } finally { submitting.value = false } }
 function goBack() { uni.redirectTo({ url: `/pages/auth/login?portal=${portal.value}` }) }
 </script>
 

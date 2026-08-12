@@ -1,18 +1,19 @@
 <script setup>
 import { onLaunch } from '@dcloudio/uni-app'
 import { setUnauthorizedHandler } from './core/http'
-import { clearSession, hydrateSession } from './core/session'
+import { clearSession, hydrateSession, session } from './core/session'
 
 let redirectingToLogin = false
 
 onLaunch(() => {
   hydrateSession()
   setUnauthorizedHandler(() => {
+    const portal = session.portal === 'agent' ? 'agent' : 'merchant'
     clearSession()
     if (redirectingToLogin) return
     redirectingToLogin = true
     uni.reLaunch({
-      url: '/pages/auth/login',
+      url: `/pages/auth/login?portal=${portal}`,
       complete: () => setTimeout(() => { redirectingToLogin = false }, 300)
     })
   })

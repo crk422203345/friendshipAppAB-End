@@ -1,3 +1,7 @@
+const apiBaseUrlOverride = typeof __API_BASE_URL__ === 'string'
+  ? __API_BASE_URL__.trim().replace(/\/+$/, '')
+  : ''
+
 const profiles = {
   template: {
     code: 'template',
@@ -29,6 +33,7 @@ const buildCode = typeof __APP_CODE__ === 'string' ? __APP_CODE__ : 'template'
 
 export const appProfile = profiles[buildCode] || profiles.template
 export const appProfiles = Object.values(profiles)
+export const apiBaseUrl = apiBaseUrlOverride || appProfile.apiBaseUrl
 
 export function getAppProfile(code) {
   return profiles[code] || profiles.template

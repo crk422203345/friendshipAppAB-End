@@ -3,3 +3,4 @@ unpackage/
 dist/
 .hbuilderx/
 .DS_Store
+.env.local

@@ -45,7 +45,8 @@ function startScan() {
 function parseInviteCode(result) {
   const raw = String(result || '').trim()
   if (!raw) return ''
-  const match = raw.match(/[?&](?:inviteCode|code)=([^&]+)/i)
+  const match = raw.match(/[?&](?:inviteCode|invitationNo|code)=([^&#]+)/i)
+    || raw.match(/\/i\/([^/?#]+)/i)
   let value = raw
   try {
     if (match) value = decodeURIComponent(match[1])

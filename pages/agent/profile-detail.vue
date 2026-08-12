@@ -3,32 +3,61 @@
     <page-nav title="个人资料" />
     <view class="content">
       <view class="avatar-panel" @tap="chooseAvatar">
-        <image v-if="session.user?.avatar" class="avatar-image" :src="session.user.avatar" mode="aspectFill" />
+        <image v-if="profile.avatar" class="avatar-image" :src="profile.avatar" mode="aspectFill" />
         <view v-else class="avatar">{{ first }}</view>
         <text>点击更换头像</text>
       </view>
       <view class="info-card">
         <view v-for="item in details" :key="item.label" class="info-row"><text>{{ item.label }}</text><text class="value" :class="{ copyable: item.copyable }" @tap="copy(item)">{{ item.value }}</text></view>
       </view>
-      <text class="tip">头像仅保存在当前设备的演示会话中。</text>
+      <text class="tip">账户资料已与服务端同步；头像更换仅保存在当前设备。</text>
     </view>
   </view>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import PageNav from '../../components/page-nav.vue'
 import { usePortalGuard } from '../../composables/use-portal-guard'
 import { session, updateSessionUser } from '../../core/session'
+import { getCurrentAccount, unwrap } from '../../services/agent'
 
-const first = computed(() => (session.user?.name || '张三').slice(0, 1))
+const profile = ref({ name: '', agentNo: '', email: '', phone: '', avatar: '' })
+const first = computed(() => String(profile.value.name || '?').slice(0, 1))
 const details = computed(() => [
-  { label: '姓名', value: session.user?.name || '张三' },
-  { label: 'ID', value: session.user?.agentId || 'AG10086', copyable: true },
-  { label: '邮箱', value: session.user?.email || '12121212@qq.com', copyable: true },
-  { label: '手机号', value: session.user?.phone || '暂未绑定' }
+  { label: '姓名', value: profile.value.name || '—' },
+  { label: 'ID', value: profile.value.agentNo || '—', copyable: Boolean(profile.value.agentNo) },
+  { label: '邮箱', value: profile.value.email || '—', copyable: Boolean(profile.value.email) },
+  { label: '手机号', value: profile.value.phone || '暂未绑定' }
 ])
 usePortalGuard('agent')
+onShow(loadProfile)
+
+async function loadProfile() {
+  try {
+    const data = unwrap(await getCurrentAccount()) || {}
+    const agent = data.agent || data.account?.agent || {}
+    const user = data.user || data.account?.user || {}
+    profile.value = {
+      name: agent.name || '',
+      agentNo: agent.agent_no || agent.agentNo || '',
+      email: agent.email || user.email || user.username || '',
+      phone: agent.phone || '',
+      avatar: agent.avatar_url || agent.avatarUrl || agent.avatar || ''
+    }
+    updateSessionUser({ ...agent, name: profile.value.name, agentId: profile.value.agentNo, email: profile.value.email, phone: profile.value.phone, avatar: profile.value.avatar })
+  } catch (error) {
+    profile.value = {
+      name: session.user?.name || '',
+      agentNo: session.user?.agentId || session.user?.agent_no || '',
+      email: session.user?.email || session.user?.username || '',
+      phone: session.user?.phone || '',
+      avatar: session.user?.avatar || session.user?.avatar_url || ''
+    }
+    uni.showToast({ title: error.message || '个人资料加载失败', icon: 'none' })
+  }
+}
 function copy(item) { if (item.copyable) uni.setClipboardData({ data: item.value, success: () => uni.showToast({ title: '已复制', icon: 'success' }) }) }
 function chooseAvatar() {
   uni.chooseImage({
@@ -39,6 +68,7 @@ function chooseAvatar() {
       const size = tempFiles?.[0]?.size || 0
       if (size > 5 * 1024 * 1024) { uni.showToast({ title: '图片不能超过 5MB', icon: 'none' }); return }
       updateSessionUser({ avatar: tempFilePaths[0] })
+      profile.value.avatar = tempFilePaths[0]
       uni.showToast({ title: '头像更新成功', icon: 'success' })
     }
   })

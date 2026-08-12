@@ -34,11 +34,12 @@ async function sendCode() {
     await sendEmailCode({ email: email.value, purpose: 'register', portal: 'agent' })
     countdown.value = 60
     timer = setInterval(() => { countdown.value -= 1; if (!countdown.value) clearInterval(timer) }, 1000)
-    uni.showToast({ title: '验证码已发送（演示码：123456）', icon: 'none' })
+    uni.showToast({ title: '验证码已发送，请注意查收', icon: 'none' })
   } catch (error) { uni.showToast({ title: error.message, icon: 'none' }) }
 }
 
 async function submit() {
+  if (submitting.value) return
   submitting.value = true
   try {
     await registerAgent({ email: email.value, password: password.value, code: code.value })

@@ -10,8 +10,7 @@ export const portals = {
     switchTo: PORTAL_MERCHANT,
     switchLabel: '切换至商家端登录',
     accent: '#5865f2',
-    showRegister: true,
-    showOtherLogin: true
+    showRegister: true
   },
   [PORTAL_MERCHANT]: {
     code: PORTAL_MERCHANT,

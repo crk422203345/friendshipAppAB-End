@@ -20,9 +20,9 @@ import PageNav from '../../components/page-nav.vue'
 import { usePortalGuard } from '../../composables/use-portal-guard'
 import { useVerificationCountdown } from '../../composables/use-verification-countdown'
 import { clearSession, session } from '../../core/session'
-import { resetPassword, sendEmailCode } from '../../services/auth'
+import { changeCurrentPassword, sendEmailCode } from '../../services/auth'
 
-const email = computed(() => session.user?.email || '12121212@qq.com')
+const email = computed(() => session.user?.email || session.user?.username || '')
 const password = ref('')
 const code = ref('')
 const showPassword = ref(false)
@@ -41,7 +41,7 @@ async function submit() {
   if (!canSubmit.value || submitting.value) return
   submitting.value = true
   try {
-    await resetPassword({ email: email.value, password: password.value, code: code.value })
+    await changeCurrentPassword({ email: email.value, password: password.value, code: code.value })
     uni.showModal({ title: '新密码修改成功！', content: '请使用新密码重新登录。', showCancel: false, success: () => { clearSession(); uni.reLaunch({ url: '/pages/auth/login?portal=agent' }) } })
   } catch (error) { uni.showToast({ title: error.message || '修改失败，请重试', icon: 'none' }) } finally { submitting.value = false }
 }

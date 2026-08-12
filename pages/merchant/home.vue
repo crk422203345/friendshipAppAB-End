@@ -1,21 +1,27 @@
 <template>
   <view class="home-page merchant-home">
-    <view class="top"><view><text class="greeting">你好，{{ session.user?.name || '商家' }}</text><text class="hint">店铺经营数据已为你准备好</text></view><view class="avatar">{{ firstLetter }}</view></view>
-    <view class="hero"><text class="hero-label">MERCHANT CENTER</text><text class="hero-title">商家经营中心</text><text class="hero-copy">把握订单与门店动态，让生意稳步向前。</text><view class="hero-line"><text>今日待处理订单</text><text class="hero-number">8</text></view></view>
+    <view class="top"><view><text class="greeting">你好，{{ merchantName }}</text><text class="hint">欢迎进入商家工作台</text></view><view class="avatar">{{ firstLetter }}</view></view>
+    <view class="hero"><text class="hero-label">MERCHANT CENTER</text><text class="hero-title">商家经营中心</text><text class="hero-copy">经营数据接口接入后将在这里展示。</text><view class="hero-line"><text>今日待处理订单</text><text class="hero-number">—</text></view></view>
     <text class="section-title">商家服务</text><view class="grid"><view v-for="item in shortcuts" :key="item.name" class="shortcut" @tap="notify(item.name)"><text class="shortcut-icon">{{ item.icon }}</text><text>{{ item.name }}</text></view></view>
     <view class="account-row"><text>当前身份</text><text class="badge">商家端</text><text class="logout" @tap="logout">退出登录</text></view>
   </view>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { enforcePortal } from '../../core/route-guard'
-import { clearSession, session } from '../../core/session'
+import { clearSession, session, updateSessionUser } from '../../core/session'
+import { getCurrentAccount, unwrap } from '../../services/agent'
+import { logout as requestLogout } from '../../services/auth'
 const shortcuts = [{ icon: '▣', name: '订单管理' }, { icon: '◉', name: '商品管理' }, { icon: '◐', name: '门店运营' }, { icon: '▥', name: '经营报表' }]
-const firstLetter = computed(() => (session.user?.name || '商').slice(0, 1))
-onMounted(() => enforcePortal('merchant'))
-function notify(name) { uni.showToast({ title: `${name}功能待接入`, icon: 'none' }) }
-function logout() { clearSession(); uni.reLaunch({ url: '/pages/auth/login?portal=merchant' }) }
+const remoteName = ref('')
+const merchantName = computed(() => remoteName.value || session.user?.name || '商家')
+const firstLetter = computed(() => merchantName.value.slice(0, 1))
+onShow(() => { if (enforcePortal('merchant')) loadAccount() })
+async function loadAccount() { try { const data = unwrap(await getCurrentAccount()) || {}; const merchant = data.merchant || data.account?.merchant || {}; const user = data.user || data.account?.user || {}; remoteName.value = merchant.name || user.name || ''; if (remoteName.value) updateSessionUser({ ...merchant, name: remoteName.value }) } catch (error) { if (!session.user) uni.showToast({ title: error.message || '商家资料加载失败', icon: 'none' }) } }
+function notify(name) { uni.showToast({ title: `${name}暂未开放`, icon: 'none' }) }
+async function logout() { try { await requestLogout() } catch { /* 本地仍需退出。 */ } clearSession(); uni.reLaunch({ url: '/pages/auth/login?portal=merchant' }) }
 </script>
 
 <style lang="scss" scoped>
