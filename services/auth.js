@@ -1,5 +1,6 @@
 import { PORTAL_AGENT, PORTAL_MERCHANT } from '../config/portals'
 import { http } from '../core/http'
+import { requireAuthorizedPortal } from '../core/login-portal.mjs'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -45,11 +46,12 @@ function normalizeLogin(response, portal, email) {
       ? accountUser
       : { email: String(email).trim() }
   const expiresIn = Number(payload.expires_in || payload.expiresIn || 0)
+  const authorizedPortal = requireAuthorizedPortal(payload, portal)
   return {
     token,
     refreshToken: payload.refresh_token || payload.refreshToken || '',
-    portal: payload.portal || accountUser.portal || portal,
-    permissions: payload.permissions || accountUser.permissions || [],
+    portal: authorizedPortal,
+    permissions: Array.isArray(payload.permissions || accountUser.permissions) ? (payload.permissions || accountUser.permissions) : [],
     expiresAt: expiresIn ? Date.now() + expiresIn * 1000 : 0,
     user
   }
@@ -97,7 +99,7 @@ export async function login({ email, password, code, loginType, portal }) {
 export async function registerAgent({ email, password, code }) {
   validateEmail(email)
   validateCode(code)
-  if (String(password || '').length < 6) throw new Error('密码至少需要 6 位')
+  validateNewPassword(password)
   return http({
     url: '/api/v1/auth/register',
     method: 'POST',
@@ -109,7 +111,7 @@ export async function registerAgent({ email, password, code }) {
 export async function resetPassword({ email, password, code }) {
   validateEmail(email)
   validateCode(code)
-  if (String(password || '').length < 6) throw new Error('新密码至少需要 6 位')
+  validateNewPassword(password)
   return http({
     url: '/api/v1/auth/password/reset',
     method: 'POST',
@@ -121,14 +123,18 @@ export async function resetPassword({ email, password, code }) {
 export async function changeCurrentPassword({ email, password, code }) {
   validateEmail(email)
   validateCode(code)
-  if (!/^(?=.*[A-Za-z])(?=.*\d).{8,20}$/.test(String(password || ''))) {
-    throw new Error('新密码需为 8—20 位并同时包含字母和数字')
-  }
+  validateNewPassword(password)
   return http({
     url: '/api/v1/me/password',
     method: 'PUT',
     data: { target: String(email).trim(), code, new_password: password }
   })
+}
+
+function validateNewPassword(password) {
+  if (!/^(?=.*[A-Za-z])(?=.*\d).{8,20}$/.test(String(password || ''))) {
+    throw new Error('密码需为 8—20 位并同时包含字母和数字')
+  }
 }
 
 export function logout() {

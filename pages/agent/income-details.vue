@@ -15,11 +15,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { computed, ref } from 'vue'
 import EmptyState from '../../components/empty-state.vue'
 import PageNav from '../../components/page-nav.vue'
 import { usePortalGuard } from '../../composables/use-portal-guard'
+import { createLatestTask } from '../../core/latest-task.mjs'
 import { getLedger, listOf, unwrap } from '../../services/agent'
 
 const now = new Date()
@@ -33,13 +33,19 @@ const draftMonth = ref(currentMonth)
 const records = ref([])
 const monthTotal = ref(null)
 const loading = ref(false)
+const ledgerRequests = createLatestTask()
 
-onLoad((options) => {
+usePortalGuard('agent', (options) => {
   const matched = String(options?.month || '').match(/^(\d{4})[-/](\d{1,2})/)
-  if (matched) selectedMonth.value = { year: Number(matched[1]), month: Number(matched[2]) }
+  if (matched) {
+    const year = Number(matched[1])
+    const month = Number(matched[2])
+    if (year >= firstAvailableYear && year <= currentYear && month >= 1 && month <= 12 && !(year === currentYear && month > currentMonth)) {
+      selectedMonth.value = { year, month }
+    }
+  }
+  loadLedger()
 })
-usePortalGuard('agent')
-onMounted(loadLedger)
 
 const selectedKey = computed(() => monthKey(selectedMonth.value.year, selectedMonth.value.month))
 const monthLabel = computed(() => `${selectedMonth.value.year}年${selectedMonth.value.month}月`)
@@ -68,19 +74,23 @@ function normalizeRecord(item) {
   }
 }
 async function loadLedger() {
+  const request = ledgerRequests.begin()
+  const month = selectedKey.value
   loading.value = true
   try {
-    const response = await getLedger({ month: selectedKey.value, page: 1, page_size: 100 })
+    const response = await getLedger({ month, page: 1, page_size: 100 })
+    if (!ledgerRequests.isCurrent(request)) return
     const payload = unwrap(response) || {}
     records.value = listOf(response).map(normalizeRecord)
     const total = Number(payload.month_total ?? payload.monthTotal)
     monthTotal.value = Number.isFinite(total) ? total : null
     if (!records.value.length && Array.isArray(payload.ledger_items)) records.value = payload.ledger_items.map(normalizeRecord)
   } catch (error) {
+    if (!ledgerRequests.isCurrent(request)) return
     records.value = []
     monthTotal.value = null
     uni.showToast({ title: error.message || '收支明细加载失败', icon: 'none' })
-  } finally { loading.value = false }
+  } finally { if (ledgerRequests.isCurrent(request)) loading.value = false }
 }
 function formatAmount(amount) { return Number(amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
 function openPicker() { draftYear.value = selectedMonth.value.year; draftMonth.value = selectedMonth.value.month; pickerVisible.value = true }

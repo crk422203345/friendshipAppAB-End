@@ -48,7 +48,7 @@
           v-for="item in notices"
           :key="item.id"
           class="notice"
-          @tap="go(`/pages/agent/article-detail?type=notice&id=${item.id}`)"
+          @tap="openNotice(item)"
           ><view class="notice-dot" /><text class="notice-title">{{
             item.title
           }}</text
@@ -62,6 +62,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { onShow } from '@dcloudio/uni-app';
 import AgentTabbar from "../../components/agent-tabbar.vue";
 import { enforcePortal } from "../../core/route-guard";
 import { session, updateSessionUser } from "../../core/session";
@@ -83,10 +84,12 @@ const quickActions = [
   { icon: "⌁", name: "推广话术", path: "/pages/agent/scripts" },
 ];
 const notices = ref([]);
+const dashboardNotices = ref([]);
 onMounted(async () => {
   if (!enforcePortal("agent")) return;
-  await Promise.all([loadDashboard(), loadAnnouncements(), loadUnreadCount()]);
+  await Promise.all([loadDashboard(), loadAnnouncements()]);
 });
+onShow(() => { if (session.token && session.portal === 'agent') loadUnreadCount() });
 async function loadDashboard() {
   try {
     const data = unwrap(await getDashboard()) || {};
@@ -107,7 +110,8 @@ async function loadDashboard() {
       updateSessionUser({ ...profile, name: remoteAgent.value.name, agentId: remoteAgent.value.agentNo });
     }
     if (Array.isArray(data.announcements) && data.announcements.length) {
-      notices.value = normalizeAnnouncements(data.announcements);
+      dashboardNotices.value = normalizeAnnouncements(data.announcements);
+      if (!notices.value.length) notices.value = dashboardNotices.value;
     }
   } catch (error) { console.warn('Failed to load dashboard', error); }
 }
@@ -115,11 +119,14 @@ async function loadAnnouncements() {
   try {
     const items = listOf(await getAnnouncements({ page: 1, page_size: 2 }));
     notices.value = normalizeAnnouncements(items);
-  } catch (error) { console.warn('Failed to load announcements', error); }
+  } catch (error) {
+    if (!notices.value.length) notices.value = dashboardNotices.value;
+    console.warn('Failed to load announcements', error);
+  }
 }
 function normalizeAnnouncements(items) {
   return items.map((item) => ({
-      id: item.id || item.announcement_no,
+      id: item.announcement_no || item.announcementNo || item.id,
       title: item.title || '',
       date: String(item.published_at || item.date || item.created_at || '').slice(5, 10)
     })).filter((item) => item.id && item.title);
@@ -134,8 +141,10 @@ function formatAmount(value) {
   return Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 function go(path) {
-  if (path.includes("notifications")) hasUnread.value = false;
   uni.navigateTo({ url: path });
+}
+function openNotice(item) {
+  go(`/pages/agent/article-detail?type=notice&id=${encodeURIComponent(item.id)}`)
 }
 </script>
 

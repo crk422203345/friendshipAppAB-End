@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import EmptyState from '../../components/empty-state.vue'
 import PageNav from '../../components/page-nav.vue'
 import { usePortalGuard } from '../../composables/use-portal-guard'
@@ -60,8 +60,7 @@ const error = ref('')
 const videoItems = computed(() => tutorials.value.filter((item) => item.kind === 'video'))
 const articleItems = computed(() => tutorials.value.filter((item) => item.kind !== 'video'))
 
-usePortalGuard('agent')
-onMounted(loadTutorials)
+usePortalGuard('agent', loadTutorials)
 
 async function loadTutorials() {
   loading.value = true

@@ -5,7 +5,7 @@
       <text class="eyebrow">ACCOUNT SECURITY</text><text class="title">忘记密码</text><text class="copy">通过邮箱验证码设置新密码</text>
       <view class="form-card">
         <view class="field"><text>邮箱</text><input v-model="email" placeholder="请输入邮箱地址" /></view>
-        <view class="field"><text>新密码</text><input v-model="password" password placeholder="至少 6 位" /></view>
+        <view class="field"><text>新密码</text><input v-model="password" password maxlength="20" placeholder="8—20 位，需包含字母和数字" /></view>
         <view class="field code-field"><text>邮箱验证码</text><input v-model="code" maxlength="6" type="number" placeholder="6 位验证码" /><text class="code-button" @tap="sendCode">{{ countdown ? `${countdown}s` : '获取验证码' }}</text></view>
         <button class="primary-button" :loading="submitting" @tap="submit">确认重置</button>
       </view>

@@ -14,10 +14,12 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, ref, watch } from 'vue'
 import EmptyState from '../../components/empty-state.vue'
 import PageNav from '../../components/page-nav.vue'
 import { usePortalGuard } from '../../composables/use-portal-guard'
+import { toPlainText } from '../../core/content.mjs'
+import { createLatestTask } from '../../core/latest-task.mjs'
 import { openExternalUrl } from '../../core/external-link'
 import { getAppConfig, getContentArticle, getFaqs, listOf, unwrap } from '../../services/agent'
 
@@ -35,16 +37,18 @@ const loading = ref(false)
 const error = ref('')
 const supportUrl = ref('')
 let searchTimer
+const questionRequests = createLatestTask()
 
-usePortalGuard('agent')
-onMounted(() => { loadQuestions(); loadSupportConfig() })
-onBeforeUnmount(() => clearTimeout(searchTimer))
+usePortalGuard('agent', () => { loadQuestions(); loadSupportConfig() })
+onBeforeUnmount(() => { clearTimeout(searchTimer); questionRequests.invalidate() })
 watch([keyword, activeCategory], () => {
   clearTimeout(searchTimer)
   searchTimer = setTimeout(loadQuestions, 350)
 })
 
 async function loadQuestions() {
+  const request = questionRequests.begin()
+  const query = { keyword: keyword.value.trim(), category: activeCategory.value }
   loading.value = true
   error.value = ''
   expandedId.value = null
@@ -52,21 +56,23 @@ async function loadQuestions() {
     const items = listOf(await getFaqs({
       page: 1,
       page_size: 100,
-      keyword: keyword.value.trim(),
-      category: activeCategory.value
+      keyword: query.keyword,
+      category: query.category
     }))
+    if (!questionRequests.isCurrent(request)) return
     questions.value = items.map((item) => ({
       id: item.article_no || item.articleNo || item.id,
       title: item.title || '',
-      answer: readableContent(item.content || item.summary),
+      answer: toPlainText(item.content || item.summary),
       hasFullContent: Boolean(item.content),
       loading: false
     })).filter((item) => item.id && item.title)
   } catch (exception) {
+    if (!questionRequests.isCurrent(request)) return
     questions.value = []
     error.value = exception.message || '常见问题加载失败'
   } finally {
-    loading.value = false
+    if (questionRequests.isCurrent(request)) loading.value = false
   }
 }
 
@@ -77,7 +83,7 @@ async function toggle(item) {
   item.loading = true
   try {
     const detail = unwrap(await getContentArticle(item.id)) || {}
-    item.answer = readableContent(detail.content || detail.summary || item.answer)
+    item.answer = toPlainText(detail.content || detail.summary || item.answer)
     item.hasFullContent = true
   } catch (exception) {
     uni.showToast({ title: exception.message || '答案加载失败', icon: 'none' })
@@ -91,17 +97,6 @@ async function loadSupportConfig() {
     const data = unwrap(await getAppConfig()) || {}
     supportUrl.value = data.customer_service_url || data.customerServiceUrl || ''
   } catch { supportUrl.value = '' }
-}
-
-function readableContent(value) {
-  return String(value || '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/^[-*+]\s+/gm, '• ')
-    .replace(/\*\*|__/g, '')
-    .trim()
 }
 
 function contactSupport() { openExternalUrl(supportUrl.value) }

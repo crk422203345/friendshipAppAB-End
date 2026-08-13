@@ -3,23 +3,26 @@
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { enforcePortal } from '../../core/route-guard'
+import { createLatestTask } from '../../core/latest-task.mjs'
 import { deleteBankCard, getBankCards, listOf, setDefaultBankCard } from '../../services/agent'
 
 const cards = ref([])
 const loading = ref(false)
 const error = ref('')
+const cardRequests = createLatestTask()
 onShow(() => { if (enforcePortal('agent')) loadCards() })
 
 async function loadCards() {
+  const request = cardRequests.begin()
   loading.value = true
   error.value = ''
-  try { cards.value = listOf(await getBankCards()).map(normalizeCard).filter((card) => card.id) }
-  catch (exception) { cards.value = []; error.value = exception.message || '银行卡加载失败' }
-  finally { loading.value = false }
+  try { const items = listOf(await getBankCards()); if (!cardRequests.isCurrent(request)) return; cards.value = items.map(normalizeCard).filter((card) => card.id !== undefined && card.id !== null && card.id !== '') }
+  catch (exception) { if (!cardRequests.isCurrent(request)) return; cards.value = []; error.value = exception.message || '银行卡加载失败' }
+  finally { if (cardRequests.isCurrent(request)) loading.value = false }
 }
 function normalizeCard(card) {
   const bank = card.bank_name || card.bankName || card.bank || '银行卡'
-  return { id: card.bank_card_no || card.bankCardNo || card.id, bank, tail: card.card_last_four || card.cardLastFour || card.tail || String(card.card_no || card.cardNo || '').slice(-4), type: card.card_type_name || card.cardTypeName || card.type || '储蓄卡', owner: card.account_name_masked || card.accountNameMasked || card.owner_name || '', isDefault: Boolean(card.is_default ?? card.isDefault), color: bank.includes('招商') ? '#cb3d4c' : '#263b78' }
+  return { id: card.id ?? card.bank_card_id ?? card.bankCardId ?? card.bank_card_no ?? card.bankCardNo, bank, tail: card.card_last_four || card.cardLastFour || card.tail || String(card.card_no || card.cardNo || '').slice(-4), type: card.card_type_name || card.cardTypeName || card.type || '储蓄卡', owner: card.account_name_masked || card.accountNameMasked || card.owner_name || '', isDefault: Boolean(card.is_default ?? card.isDefault), color: bank.includes('招商') ? '#cb3d4c' : '#263b78' }
 }
 function back() { uni.navigateBack() }
 function addCard() { uni.showModal({ title: '暂不支持 App 内绑卡', content: '当前后端尚未提供安全绑卡接口，请联系平台客服完成银行卡绑定。', showCancel: false }) }

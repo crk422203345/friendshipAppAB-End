@@ -3,26 +3,33 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { enforcePortal } from '../../core/route-guard'
+import { createLatestTask } from '../../core/latest-task.mjs'
 import { getAnnouncements, listOf } from '../../services/agent'
 
 const now = new Date()
 const selectedMonth = ref(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
 const items = ref([])
 const loading = ref(false)
+const requestTask = createLatestTask()
 const monthLabel = computed(() => { const [year, month] = selectedMonth.value.split('-'); return `${year}年${Number(month)}月` })
 
 onMounted(() => { if (enforcePortal('agent')) loadAnnouncements() })
+onBeforeUnmount(requestTask.invalidate)
 async function loadAnnouncements() {
+  const requestId = requestTask.begin()
   loading.value = true
   try {
-    items.value = listOf(await getAnnouncements({ month: selectedMonth.value, page: 1, page_size: 50 })).map((item) => ({
+    const nextItems = listOf(await getAnnouncements({ month: selectedMonth.value, page: 1, page_size: 50 })).map((item) => ({
       id: item.announcement_no || item.announcementNo || item.id,
       title: item.title || '-',
       date: String(item.published_at || item.publishedAt || item.created_at || item.createdAt || '').slice(0, 10)
     })).filter((item) => item.id)
-  } catch (error) { items.value = []; uni.showToast({ title: error.message || '公告加载失败', icon: 'none' }) } finally { loading.value = false }
+    if (requestTask.isCurrent(requestId)) items.value = nextItems
+  } catch (error) {
+    if (requestTask.isCurrent(requestId)) { items.value = []; uni.showToast({ title: error.message || '公告加载失败', icon: 'none' }) }
+  } finally { if (requestTask.isCurrent(requestId)) loading.value = false }
 }
 function back() { uni.navigateBack() }
 function changeMonth(event) { selectedMonth.value = event.detail.value; loadAnnouncements() }

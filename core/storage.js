@@ -8,9 +8,19 @@ export function getStorage(key, fallback = null) {
 }
 
 export function setStorage(key, value) {
-  uni.setStorageSync(key, value)
+  try {
+    uni.setStorageSync(key, value)
+    return true
+  } catch {
+    return false
+  }
 }
 
 export function removeStorage(key) {
-  uni.removeStorageSync(key)
+  try {
+    uni.removeStorageSync(key)
+    return true
+  } catch {
+    return false
+  }
 }

@@ -13,16 +13,18 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import EmptyState from '../../components/empty-state.vue'
 import PageNav from '../../components/page-nav.vue'
 import { usePortalGuard } from '../../composables/use-portal-guard'
+import { toPlainText } from '../../core/content.mjs'
 import { getContentArticle, getPlatformRules, listOf, unwrap } from '../../services/agent'
 
 const activeKey = ref('')
 const ruleSets = ref([])
 const loading = ref(false)
-const detailLoading = ref(false)
+const detailLoadingKey = ref('')
+const detailLoading = computed(() => detailLoadingKey.value === activeKey.value)
 const error = ref('')
 const current = computed(() => ruleSets.value.find((item) => item.key === activeKey.value))
 const ruleNotice = computed(() => {
@@ -31,8 +33,7 @@ const ruleNotice = computed(() => {
   return `${version}${current.value.requiresAck ? '请阅读并遵守本规则，规则更新以平台发布内容为准。' : '规则更新以平台最新发布内容为准。'}`
 })
 
-usePortalGuard('agent')
-onMounted(loadRules)
+usePortalGuard('agent', loadRules)
 
 async function loadRules() {
   loading.value = true
@@ -44,7 +45,7 @@ async function loadRules() {
       name: item.category_name || item.categoryName || item.title || '',
       title: item.title || '',
       summary: item.summary || '',
-      content: readableContent(item.content),
+      content: toPlainText(item.content),
       version: item.version_no || item.versionNo || '',
       requiresAck: Boolean(item.requires_ack ?? item.requiresAck)
     })).filter((item) => item.key && item.title)
@@ -68,34 +69,23 @@ async function selectRule(key) {
 async function loadRuleDetail(key) {
   const target = ruleSets.value.find((item) => item.key === key)
   if (!target || target.content) return
-  detailLoading.value = true
+  detailLoadingKey.value = key
   try {
     const detail = unwrap(await getContentArticle(key)) || {}
     Object.assign(target, {
       title: detail.title || target.title,
       summary: detail.summary || target.summary,
-      content: readableContent(detail.content),
+      content: toPlainText(detail.content),
       version: detail.version_no || detail.versionNo || target.version,
       requiresAck: Boolean(detail.requires_ack ?? detail.requiresAck ?? target.requiresAck)
     })
   } catch (exception) {
     uni.showToast({ title: exception.message || '规则正文加载失败', icon: 'none' })
   } finally {
-    detailLoading.value = false
+    if (detailLoadingKey.value === key) detailLoadingKey.value = ''
   }
 }
 
-function readableContent(value) {
-  return String(value || '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/^[-*+]\s+/gm, '• ')
-    .replace(/\*\*|__/g, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
-}
 </script>
 
 <style lang="scss" scoped>

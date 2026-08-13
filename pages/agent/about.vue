@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import MenuList from '../../components/menu-list.vue'
 import PageNav from '../../components/page-nav.vue'
 import { usePortalGuard } from '../../composables/use-portal-guard'
@@ -34,8 +34,7 @@ const items = computed(() => [
   appConfig.value.customerServiceUrl && { name: '联系客服', action: 'service-center', url: appConfig.value.customerServiceUrl }
 ].filter(Boolean))
 
-usePortalGuard('agent')
-onMounted(loadConfig)
+usePortalGuard('agent', loadConfig)
 
 async function loadConfig() {
   try {

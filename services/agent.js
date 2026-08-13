@@ -14,7 +14,8 @@ export function unwrap(response) {
 export function listOf(response) {
   const payload = unwrap(response)
   if (Array.isArray(payload)) return payload
-  return payload?.items || payload?.list || payload?.records || []
+  const candidate = payload?.items ?? payload?.list ?? payload?.records
+  return Array.isArray(candidate) ? candidate : []
 }
 
 export function getDashboard() {

@@ -10,14 +10,17 @@
     "dev:app:c": "cross-env UNI_INPUT_DIR=. UNI_APP_CODE=c uni -p app",
     "dev:h5": "cross-env UNI_INPUT_DIR=. UNI_APP_CODE=template uni",
     "dev:mp-weixin": "cross-env UNI_INPUT_DIR=. UNI_APP_CODE=template uni -p mp-weixin",
-    "build:app": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=template uni build -p app",
-    "build:app:a": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=a uni build -p app",
-    "build:app:b": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=b uni build -p app",
-    "build:app:c": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=c uni build -p app",
-    "build:h5": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=template uni build",
-    "build:mp-weixin": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_APP_CODE=template uni build -p mp-weixin",
+    "build:app": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_BUILD_MODE=production UNI_APP_CODE=template uni build -p app",
+    "build:app:a": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_BUILD_MODE=production UNI_APP_CODE=a uni build -p app",
+    "build:app:b": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_BUILD_MODE=production UNI_APP_CODE=b uni build -p app",
+    "build:app:c": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_BUILD_MODE=production UNI_APP_CODE=c uni build -p app",
+    "build:h5": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_BUILD_MODE=production UNI_APP_CODE=template uni build",
+    "build:mp-weixin": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_BUILD_MODE=production UNI_APP_CODE=template uni build -p mp-weixin",
+    "test:unit": "node --test tests/*.test.mjs",
+    "verify:source": "node scripts/verify-source.mjs",
     "verify:routes": "node scripts/verify-routes.mjs",
-    "verify": "npm run verify:routes && npm run build:mp-weixin",
+    "verify:build": "cross-env UNI_INPUT_DIR=. NODE_ENV=production UNI_BUILD_MODE=production UNI_API_BASE_URL=https://api.invalid UNI_APP_CODE=template uni build -p mp-weixin",
+    "verify": "npm run test:unit && npm run verify:source && npm run verify:routes && npm run verify:build",
     "test": "npm run verify"
   },
   "repository": {
@@ -39,8 +42,7 @@
     "@dcloudio/uni-mp-weixin": "3.0.0-5010520260709002",
     "uqrcodejs": "^4.0.7",
     "uview-pro": "^0.6.6",
-    "vue": "3.4.21",
-    "vue-i18n": "9.14.5"
+    "vue": "3.4.21"
   },
   "devDependencies": {
     "@dcloudio/types": "3.4.31",

@@ -2,15 +2,15 @@
   <view class="detail-page">
     <page-nav title="个人资料" />
     <view class="content">
-      <view class="avatar-panel" @tap="chooseAvatar">
+      <view class="avatar-panel">
         <image v-if="profile.avatar" class="avatar-image" :src="profile.avatar" mode="aspectFill" />
         <view v-else class="avatar">{{ first }}</view>
-        <text>点击更换头像</text>
+        <text>账户头像</text>
       </view>
       <view class="info-card">
         <view v-for="item in details" :key="item.label" class="info-row"><text>{{ item.label }}</text><text class="value" :class="{ copyable: item.copyable }" @tap="copy(item)">{{ item.value }}</text></view>
       </view>
-      <text class="tip">账户资料已与服务端同步；头像更换仅保存在当前设备。</text>
+      <text class="tip">账户资料已与服务端同步，如需修改请联系平台客服。</text>
     </view>
   </view>
 </template>
@@ -19,7 +19,7 @@
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import PageNav from '../../components/page-nav.vue'
-import { usePortalGuard } from '../../composables/use-portal-guard'
+import { enforcePortal } from '../../core/route-guard'
 import { session, updateSessionUser } from '../../core/session'
 import { getCurrentAccount, unwrap } from '../../services/agent'
 
@@ -31,8 +31,7 @@ const details = computed(() => [
   { label: '邮箱', value: profile.value.email || '—', copyable: Boolean(profile.value.email) },
   { label: '手机号', value: profile.value.phone || '暂未绑定' }
 ])
-usePortalGuard('agent')
-onShow(loadProfile)
+onShow(() => { if (enforcePortal('agent')) loadProfile() })
 
 async function loadProfile() {
   try {
@@ -59,20 +58,6 @@ async function loadProfile() {
   }
 }
 function copy(item) { if (item.copyable) uni.setClipboardData({ data: item.value, success: () => uni.showToast({ title: '已复制', icon: 'success' }) }) }
-function chooseAvatar() {
-  uni.chooseImage({
-    count: 1,
-    sizeType: ['compressed'],
-    sourceType: ['album', 'camera'],
-    success: ({ tempFilePaths, tempFiles }) => {
-      const size = tempFiles?.[0]?.size || 0
-      if (size > 5 * 1024 * 1024) { uni.showToast({ title: '图片不能超过 5MB', icon: 'none' }); return }
-      updateSessionUser({ avatar: tempFilePaths[0] })
-      profile.value.avatar = tempFilePaths[0]
-      uni.showToast({ title: '头像更新成功', icon: 'success' })
-    }
-  })
-}
 </script>
 
 <style lang="scss" scoped>

@@ -17,6 +17,7 @@
 import { onMounted, ref } from 'vue'
 import AgentTabbar from '../../components/agent-tabbar.vue'
 import { enforcePortal } from '../../core/route-guard'
+import { createLatestTask } from '../../core/latest-task.mjs'
 import { getMerchants, listOf, unwrap } from '../../services/agent'
 
 const keyword = ref('')
@@ -24,6 +25,7 @@ const activeFilter = ref('all')
 const merchants = ref([])
 const total = ref(0)
 const loading = ref(false)
+const merchantRequests = createLatestTask()
 const filters = [{ key: 'all', name: '全部' }, { key: 'online', name: '已上线' }, { key: 'reviewing', name: '审核中' }, { key: 'offline', name: '已下线' }]
 
 onMounted(() => {
@@ -48,22 +50,26 @@ function normalizeMerchant(item) {
   }
 }
 async function loadMerchants() {
+  const request = merchantRequests.begin()
+  const query = { status: activeFilter.value === 'all' ? undefined : activeFilter.value, keyword: keyword.value.trim() }
   loading.value = true
   try {
     const response = await getMerchants({
-      status: activeFilter.value === 'all' ? undefined : activeFilter.value,
-      keyword: keyword.value.trim(),
+      status: query.status,
+      keyword: query.keyword,
       page: 1,
       page_size: 50
     })
+    if (!merchantRequests.isCurrent(request)) return
     const payload = unwrap(response) || {}
     merchants.value = listOf(response).map(normalizeMerchant).filter((item) => item.id)
     total.value = Number(payload.merchant_total ?? payload.total ?? payload.total_count ?? payload.pagination?.total ?? merchants.value.length)
   } catch (error) {
+    if (!merchantRequests.isCurrent(request)) return
     merchants.value = []
     total.value = 0
     uni.showToast({ title: error.message || '商家加载失败', icon: 'none' })
-  } finally { loading.value = false }
+  } finally { if (merchantRequests.isCurrent(request)) loading.value = false }
 }
 function selectFilter(status) { activeFilter.value = status; loadMerchants() }
 function search() { loadMerchants() }

@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { enforcePortal } from '../../core/route-guard'
 import { createWithdrawal, getBankCards, getCommissionSummary, getWithdrawalPolicy, listOf, unwrap } from '../../services/agent'
 const amount = ref(''); const availableAmount = ref(0); const cards = ref([]); const policy = ref({}); const selectedCardIndex = ref(0); const loading = ref(false); const submitting = ref(false); const showPassword = ref(false); const showError = ref(false); const errorMessage = ref('提现申请失败，请重试'); const password = ref(''); const keys = ['1','2','3','4','5','6','7','8','9','','0']
@@ -35,20 +35,27 @@ const effectiveMaximum = computed(() => Math.min(availableAmount.value, maximumA
 const isAmountValid = computed(() => Boolean(selectedCard.value) && Number(amount.value) > 0 && Number(amount.value) >= minimumAmount.value && Number(amount.value) <= effectiveMaximum.value)
 const arrivalText = computed(() => policy.value.arrival_text || policy.value.arrivalText || '到账时间以银行处理结果为准')
 const ruleText = computed(() => minimumAmount.value > 0 ? `单笔最低提现 ¥${minimumAmount.value.toFixed(2)}，最高不超过可提现余额` : '单笔提现金额不得超过可提现佣金余额')
+let withdrawalKey = ''
+watch([amount, selectedCardIndex], () => { withdrawalKey = '' })
 async function loadWithdrawalInfo() {
   if (!enforcePortal('agent')) return
   loading.value = true
   try {
-    const [summaryResponse, cardsResponse, policyResponse] = await Promise.all([getCommissionSummary(), getBankCards(), getWithdrawalPolicy()])
-    const summary = unwrap(summaryResponse) || {}
-    availableAmount.value = Number(summary.available_balance_amount ?? summary.availableBalanceAmount ?? 0)
-    cards.value = listOf(cardsResponse).map(normalizeCard).filter((card) => card.id)
-    policy.value = unwrap(policyResponse) || {}
+    const [summaryResult, cardsResult, policyResult] = await Promise.allSettled([getCommissionSummary(), getBankCards(), getWithdrawalPolicy()])
+    const failures = []
+    if (summaryResult.status === 'fulfilled') {
+      const summary = unwrap(summaryResult.value) || {}
+      availableAmount.value = Number(summary.available_balance_amount ?? summary.availableBalanceAmount ?? 0)
+    } else { availableAmount.value = 0; failures.push(summaryResult.reason) }
+    if (cardsResult.status === 'fulfilled') cards.value = listOf(cardsResult.value).map(normalizeCard).filter((card) => card.id !== undefined && card.id !== null && card.id !== '')
+    else { cards.value = []; failures.push(cardsResult.reason) }
+    policy.value = policyResult.status === 'fulfilled' ? (unwrap(policyResult.value) || {}) : {}
     const defaultIndex = cards.value.findIndex((card) => card.isDefault)
     selectedCardIndex.value = defaultIndex >= 0 ? defaultIndex : 0
+    if (failures.length) uni.showToast({ title: failures[0]?.message || '部分提现信息加载失败', icon: 'none' })
   } catch (error) { uni.showToast({ title: error.message || '提现信息加载失败', icon: 'none' }) } finally { loading.value = false }
 }
-function normalizeCard(card) { return { id: card.bank_card_no || card.bankCardNo || card.id, bank: card.bank_name || card.bankName || card.bank || '银行卡', tail: card.card_last_four || card.cardLastFour || card.tail || String(card.card_no || card.cardNo || '').slice(-4), isDefault: Boolean(card.is_default ?? card.isDefault) } }
+function normalizeCard(card) { return { id: card.id ?? card.bank_card_id ?? card.bankCardId ?? card.bank_card_no ?? card.bankCardNo, bank: card.bank_name || card.bankName || card.bank || '银行卡', tail: card.card_last_four || card.cardLastFour || card.tail || String(card.card_no || card.cardNo || '').slice(-4), isDefault: Boolean(card.is_default ?? card.isDefault) } }
 function back() { uni.navigateBack() }
 function fillAll() { amount.value = effectiveMaximum.value.toFixed(2) }
 function chooseCard() { if (!cards.value.length) return; uni.showActionSheet({ itemList: cards.value.map((item) => `${item.bank}（尾号${item.tail}）`), success: ({ tapIndex }) => { selectedCardIndex.value = tapIndex } }) }
@@ -59,10 +66,12 @@ async function submitWithdrawal() {
   if (submitting.value || !isAmountValid.value || password.value.length !== 6) return
   submitting.value = true
   try {
-    await createWithdrawal({ bank_card_id: selectedCard.value.id, amount: Number(normalizedAmount.value), payment_password: password.value }, `withdraw-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`)
+    if (!withdrawalKey) withdrawalKey = `withdraw-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+    await createWithdrawal({ bank_card_id: selectedCard.value.id, amount: Number(normalizedAmount.value), payment_password: password.value }, withdrawalKey)
+    withdrawalKey = ''
     showPassword.value = false
     uni.showModal({ title: '提现申请已提交', content: '可在收益明细中查看后续处理状态。', showCancel: false, success: back })
-  } catch (error) { showPassword.value = false; errorMessage.value = error.message || '提现申请失败，请重试'; showError.value = true } finally { password.value = ''; submitting.value = false }
+  } catch (error) { if (error.statusCode >= 400 && error.statusCode < 500) withdrawalKey = ''; showPassword.value = false; errorMessage.value = error.message || '提现申请失败，请重试'; showError.value = true } finally { password.value = ''; submitting.value = false }
 }
 function retry() { showError.value = false; password.value = ''; showPassword.value = true }
 function goForgot() { showError.value = false; showPassword.value = false; uni.navigateTo({ url: '/pages/agent/payment-password-reset' }) }

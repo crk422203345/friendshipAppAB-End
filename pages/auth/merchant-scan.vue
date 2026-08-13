@@ -14,6 +14,8 @@
 </template>
 
 <script setup>
+import { parseInvitationCode } from '../../core/invitation.mjs'
+
 function goBack() { uni.navigateBack() }
 function startScan() {
   // #ifdef H5
@@ -29,7 +31,7 @@ function startScan() {
     onlyFromCamera: false,
     scanType: ['qrCode'],
     success: ({ result }) => {
-      const inviteCode = parseInviteCode(result)
+      const inviteCode = parseInvitationCode(result)
       if (!inviteCode) {
         uni.showToast({ title: '无效的开店邀请二维码', icon: 'none' })
         return
@@ -42,19 +44,6 @@ function startScan() {
   })
 }
 
-function parseInviteCode(result) {
-  const raw = String(result || '').trim()
-  if (!raw) return ''
-  const match = raw.match(/[?&](?:inviteCode|invitationNo|code)=([^&#]+)/i)
-    || raw.match(/\/i\/([^/?#]+)/i)
-  let value = raw
-  try {
-    if (match) value = decodeURIComponent(match[1])
-  } catch {
-    return ''
-  }
-  return /^[A-Za-z0-9_-]{6,128}$/.test(value) ? value : ''
-}
 </script>
 
 <style lang="scss" scoped>

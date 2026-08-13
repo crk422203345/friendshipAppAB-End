@@ -7,9 +7,9 @@
 
 <script setup>
 import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
 import PageNav from '../../components/page-nav.vue'
 import { usePortalGuard } from '../../composables/use-portal-guard'
+import { toPlainText } from '../../core/content.mjs'
 import { openExternalUrl } from '../../core/external-link'
 import { getContentArticle, unwrap } from '../../services/agent'
 
@@ -18,8 +18,7 @@ const article = ref(null)
 const loading = ref(false)
 const error = ref('')
 
-onLoad((options) => { id.value = String(options?.id || ''); loadArticle() })
-usePortalGuard('agent')
+usePortalGuard('agent', (options) => { id.value = String(options?.id || ''); loadArticle() })
 
 async function loadArticle() {
   if (!id.value) { error.value = '缺少教程编号'; return }
@@ -30,7 +29,7 @@ async function loadArticle() {
     article.value = {
       title: data.title || '',
       summary: data.summary || '',
-      content: readableContent(data.content),
+      content: toPlainText(data.content),
       categoryName: data.category_name || data.categoryName || '',
       coverUrl: data.cover_url || data.coverUrl || '',
       externalUrl: data.video_url || data.videoUrl || data.external_url || data.externalUrl || '',
@@ -42,18 +41,6 @@ async function loadArticle() {
   } finally {
     loading.value = false
   }
-}
-
-function readableContent(value) {
-  return String(value || '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/^[-*+]\s+/gm, '• ')
-    .replace(/\*\*|__/g, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
 }
 
 function formatDate(value) {

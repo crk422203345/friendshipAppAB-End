@@ -37,7 +37,7 @@
           <input v-model="password" password placeholder="请输入密码" placeholder-class="placeholder" />
         </view>
 
-        <button class="primary-button" :loading="submitting" @tap="submitLogin">登录</button>
+        <button class="primary-button" :disabled="submitting || !agreed || !legalAvailable" :loading="submitting" @tap="submitLogin">登录</button>
         <view class="card-actions">
           <text v-if="portal.showRegister" @tap="goRegister">注册账号</text>
           <text v-if="loginType === 'password' || portal.code === 'agent'" @tap="goForgot">忘记密码？</text>
@@ -56,7 +56,8 @@
         <text>{{ portal.switchLabel }}</text>
         <text class="switch-arrow">→</text>
       </view>
-      <text class="agreement">登录即表示你同意《服务协议》与《隐私政策》</text>
+      <view class="agreement"><text class="agreement-check" @tap="toggleAgreement">{{ agreed ? '✓' : '' }}</text><text>我已阅读并同意</text><text class="legal-link" @tap="openLegalDocument('service')">《服务协议》</text><text>与</text><text class="legal-link" @tap="openLegalDocument('privacy')">《隐私政策》</text></view>
+      <text v-if="legalLoading" class="legal-status">协议加载中…</text><text v-else-if="legalError" class="legal-status legal-error" @tap="loadLegalLinks">{{ legalError }}，点击重试</text>
     </view>
   </view>
 </template>
@@ -65,6 +66,7 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useVerificationCountdown } from '../../composables/use-verification-countdown'
+import { useLegalConsent } from '../../composables/use-legal-consent'
 import { getPortal, PORTAL_AGENT, PORTAL_MERCHANT } from '../../config/portals'
 import { setSession } from '../../core/session'
 import { login, sendEmailCode } from '../../services/auth'
@@ -76,11 +78,13 @@ const password = ref('')
 const code = ref('')
 const submitting = ref(false)
 const { countdown, execute: sendWithCountdown } = useVerificationCountdown()
+const { agreed, available: legalAvailable, loading: legalLoading, error: legalError, loadLegalLinks, openLegalDocument, toggleAgreement } = useLegalConsent()
 
 const portal = computed(() => getPortal(portalCode.value))
 
 onLoad((options) => {
   if (options?.portal === PORTAL_AGENT) portalCode.value = PORTAL_AGENT
+  loadLegalLinks()
 })
 
 function setLoginType(type) {
@@ -99,6 +103,8 @@ async function sendCode() {
 
 async function submitLogin() {
   if (submitting.value) return
+  if (!legalAvailable.value) { uni.showToast({ title: '服务协议与隐私政策暂不可用', icon: 'none' }); return }
+  if (!agreed.value) { uni.showToast({ title: '请先阅读并同意服务协议与隐私政策', icon: 'none' }); return }
   submitting.value = true
   try {
     const result = await login({
@@ -147,15 +153,15 @@ function goOnboarding() {
 .brand { display: flex; align-items: center; gap: 18rpx; width: max-content; }
 .brand-mark { display: flex; align-items: center; justify-content: center; width: 68rpx; height: 68rpx; border-radius: 22rpx; background: linear-gradient(135deg, #5865f2, #8a93ff); color: #fff; font-size: 38rpx; font-weight: 800; box-shadow: 0 12rpx 24rpx rgba(88,101,242,.24); }
 .portal-merchant .brand-mark { background: linear-gradient(135deg, #0f9d7a, #38c6a2); box-shadow: 0 12rpx 24rpx rgba(15,157,122,.24); }
-.brand-name, .brand-slogan, .eyebrow, .title, .subtitle, .field-label, .onboarding-title, .onboarding-copy, .agreement { display: block; }
+.brand-name, .brand-slogan, .eyebrow, .title, .subtitle, .field-label, .onboarding-title, .onboarding-copy { display: block; }
 .brand-name { font-size: 28rpx; font-weight: 750; letter-spacing: .4rpx; }.brand-slogan { margin-top: 2rpx; color: #8490a5; font-size: 20rpx; }
 .heading { margin: 78rpx 0 42rpx; }.eyebrow { color: #6d7bf7; font-size: 20rpx; letter-spacing: 2.4rpx; font-weight: 700; }.portal-merchant .eyebrow { color: #0f9d7a; }
 .title { margin-top: 16rpx; font-size: 54rpx; font-weight: 750; letter-spacing: -1rpx; }.subtitle { margin-top: 14rpx; color: #7a869b; font-size: 26rpx; }
 .login-card { padding: 32rpx; border: 1rpx solid rgba(222,226,239,.9); border-radius: 30rpx; background: rgba(255,255,255,.94); box-shadow: 0 24rpx 70rpx rgba(30,43,70,.08); }
 .login-tabs { display: flex; gap: 40rpx; margin-bottom: 28rpx; border-bottom: 1rpx solid #edf0f5; }.login-tabs text { position: relative; padding: 0 2rpx 20rpx; color: #8993a7; font-size: 27rpx; }.login-tabs .active { color: #25304a; font-weight: 700; }.login-tabs .active::after { position: absolute; bottom: -1rpx; left: 0; width: 100%; height: 5rpx; border-radius: 6rpx; background: #5865f2; content: ''; }.portal-merchant .login-tabs .active::after { background: #0f9d7a; }
 .field { position: relative; margin-top: 22rpx; padding: 14rpx 0; border-bottom: 1rpx solid #e8ebf1; }.field-label { margin-bottom: 10rpx; color: #4d5870; font-size: 23rpx; font-weight: 650; }.field input { height: 48rpx; padding-right: 184rpx; font-size: 29rpx; }.placeholder { color: #b3bbc9; font-size: 26rpx; }.code-button { position: absolute; right: 0; bottom: 20rpx; color: #5865f2; font-size: 24rpx; }.portal-merchant .code-button { color: #0f9d7a; }.code-button.disabled { color: #aeb5c2; }
-.primary-button { width: 100%; margin-top: 42rpx; border-radius: 16rpx; background: #5865f2; color: #fff; font-size: 29rpx; font-weight: 650; line-height: 94rpx; }.portal-merchant .primary-button { background: #0f9d7a; }.primary-button::after, .secondary-button::after { border: 0; }
+.primary-button { width: 100%; margin-top: 42rpx; border-radius: 16rpx; background: #5865f2; color: #fff; font-size: 29rpx; font-weight: 650; line-height: 94rpx; }.portal-merchant .primary-button { background: #0f9d7a; }.primary-button[disabled] { opacity: .55; }.primary-button::after, .secondary-button::after { border: 0; }
 .card-actions { display: flex; justify-content: flex-end; gap: 26rpx; margin-top: 24rpx; color: #69758c; font-size: 23rpx; }
 .onboarding { display: flex; align-items: center; justify-content: space-between; margin-top: 28rpx; padding: 26rpx 28rpx; border: 1rpx solid #cbece2; border-radius: 22rpx; background: #edfbf6; }.onboarding-title { color: #1b644f; font-size: 27rpx; font-weight: 700; }.onboarding-copy { margin-top: 7rpx; color: #568473; font-size: 21rpx; line-height: 1.45; }.arrow { color: #0f9d7a; font-size: 52rpx; font-weight: 300; }
-.secondary-button { width: 100%; margin-top: 26rpx; border: 1rpx solid #dce1eb; border-radius: 16rpx; background: #fff; color: #536078; font-size: 27rpx; line-height: 88rpx; }.switch-portal { display: flex; align-items: center; justify-content: center; gap: 12rpx; margin-top: 64rpx; color: #43506a; font-size: 27rpx; }.switch-arrow { color: #5865f2; font-size: 37rpx; font-weight: 600; }.portal-merchant .switch-arrow { color: #0f9d7a; }.agreement { margin-top: 28rpx; color: #a0a8b8; text-align: center; font-size: 20rpx; }
+.secondary-button { width: 100%; margin-top: 26rpx; border: 1rpx solid #dce1eb; border-radius: 16rpx; background: #fff; color: #536078; font-size: 27rpx; line-height: 88rpx; }.switch-portal { display: flex; align-items: center; justify-content: center; gap: 12rpx; margin-top: 64rpx; color: #43506a; font-size: 27rpx; }.switch-arrow { color: #5865f2; font-size: 37rpx; font-weight: 600; }.portal-merchant .switch-arrow { color: #0f9d7a; }.agreement { display:flex;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:28rpx;color:#a0a8b8;text-align:center;font-size:20rpx;line-height:1.8 }.agreement-check{display:inline-flex;align-items:center;justify-content:center;width:28rpx;height:28rpx;margin-right:8rpx;border:2rpx solid #9da6b7;border-radius:7rpx;color:#5865f2;font-size:20rpx;box-sizing:border-box}.legal-link{color:#5865f2}.portal-merchant .legal-link,.portal-merchant .agreement-check{color:#0f9d7a}.legal-status{display:block;margin-top:8rpx;color:#9aa3b4;text-align:center;font-size:20rpx}.legal-error{color:#d06464}
 </style>

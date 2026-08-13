@@ -1,13 +1,13 @@
 <template>
   <view class="tabbar">
-    <view v-for="item in items" :key="item.path" class="tab" :class="{ active: active === item.key }" @tap="navigate(item.path)">
+    <view v-for="item in items" :key="item.path" class="tab" :class="{ active: active === item.key }" @tap="navigate(item)">
       <text class="tab-icon iconfont" :class="iconClass(item.key)" /><text>{{ item.name }}</text>
     </view>
   </view>
 </template>
 
 <script setup>
-defineProps({ active: { type: String, default: 'home' } })
+const props = defineProps({ active: { type: String, default: 'home' } })
 const items = [
   { key: 'home', name: '首页', icon: '▦', path: '/pages/agent/home' },
   { key: 'merchants', name: '我的商家', icon: '▤', path: '/pages/agent/merchants' },
@@ -21,7 +21,10 @@ const iconClasses = {
   profile: 'icon-wode'
 }
 function iconClass(key) { return iconClasses[key] }
-function navigate(path) { uni.reLaunch({ url: path }) }
+function navigate(item) {
+  if (props.active === item.key) return
+  uni.redirectTo({ url: item.path })
+}
 </script>
 
 <style lang="scss" scoped>

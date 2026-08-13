@@ -3,27 +3,34 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { enforcePortal } from '../../core/route-guard'
+import { createLatestTask } from '../../core/latest-task.mjs'
 import { getPromotionMaterials, listOf } from '../../services/agent'
 
 const now = new Date()
 const selectedMonth = ref(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
 const scripts = ref([])
 const loading = ref(false)
+const requestTask = createLatestTask()
 const monthLabel = computed(() => { const [year, month] = selectedMonth.value.split('-'); return `${year}年${Number(month)}月` })
 
 onMounted(() => { if (enforcePortal('agent')) loadScripts() })
+onBeforeUnmount(requestTask.invalidate)
 async function loadScripts() {
+  const requestId = requestTask.begin()
   loading.value = true
   try {
-    scripts.value = listOf(await getPromotionMaterials({ month: selectedMonth.value, page: 1, page_size: 50 })).map((item) => ({
+    const nextScripts = listOf(await getPromotionMaterials({ month: selectedMonth.value, page: 1, page_size: 50 })).map((item) => ({
       id: item.material_no || item.materialNo || item.id,
       title: item.title || '-',
       summary: item.summary || item.description || '',
       date: String(item.published_at || item.publishedAt || item.created_at || item.createdAt || '').slice(0, 10)
     })).filter((item) => item.id)
-  } catch (error) { scripts.value = []; uni.showToast({ title: error.message || '话术加载失败', icon: 'none' }) } finally { loading.value = false }
+    if (requestTask.isCurrent(requestId)) scripts.value = nextScripts
+  } catch (error) {
+    if (requestTask.isCurrent(requestId)) { scripts.value = []; uni.showToast({ title: error.message || '话术加载失败', icon: 'none' }) }
+  } finally { if (requestTask.isCurrent(requestId)) loading.value = false }
 }
 function back() { uni.navigateBack() }
 function changeMonth(event) { selectedMonth.value = event.detail.value; loadScripts() }

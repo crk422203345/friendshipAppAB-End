@@ -3,11 +3,12 @@
 import { onMounted, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { enforcePortal } from '../../core/route-guard'
+import { toPlainText } from '../../core/content.mjs'
 import { getAnnouncement, getPromotionMaterial, reportPromotionMaterialEvent, unwrap } from '../../services/agent'
 const type=ref('notice'),id=ref(''),article=ref({}),loading=ref(false)
 onLoad((options)=>{type.value=options?.type||'notice';id.value=String(options?.id||'')})
 onMounted(()=>{if(enforcePortal('agent')&&id.value)loadArticle()})
-function normalizeArticle(data){return{id:data.material_no||data.materialNo||data.announcement_no||data.announcementNo||data.id||id.value,title:data.title||'',summary:data.summary||'',content:data.content||data.body||data.text||'',date:String(data.published_at||data.publishedAt||data.created_at||data.createdAt||'').slice(0,10),author:data.author||data.publisher||data.operator_name||''}}
+function normalizeArticle(data){return{id:data.material_no||data.materialNo||data.announcement_no||data.announcementNo||data.id||id.value,title:toPlainText(data.title),summary:toPlainText(data.summary),content:toPlainText(data.content||data.body||data.text),date:String(data.published_at||data.publishedAt||data.created_at||data.createdAt||'').slice(0,10),author:toPlainText(data.author||data.publisher||data.operator_name)}}
 async function loadArticle(){loading.value=true;try{const response=type.value==='script'?await getPromotionMaterial(id.value):await getAnnouncement(id.value);article.value=normalizeArticle(unwrap(response)||{})}catch(error){article.value={};uni.showToast({title:error.message||'内容加载失败',icon:'none'})}finally{loading.value=false}}
 function back(){uni.navigateBack()}
 function share(){const content=article.value.content||article.value.summary||article.value.title;if(!content)return;uni.setClipboardData({data:content,success:async()=>{uni.showToast({title:'话术已复制',icon:'success'});try{await reportPromotionMaterialEvent(article.value.id,{action:'copy',channel:'detail'},`promotion-${Date.now()}-${Math.random().toString(36).slice(2,10)}`)}catch(error){console.warn('Failed to report promotion copy event',error)}}})}

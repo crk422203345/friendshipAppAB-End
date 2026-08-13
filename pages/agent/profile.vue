@@ -27,7 +27,7 @@ import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import AgentTabbar from '../../components/agent-tabbar.vue'
 import MenuList from '../../components/menu-list.vue'
-import { usePortalGuard } from '../../composables/use-portal-guard'
+import { enforcePortal } from '../../core/route-guard'
 import { openPage } from '../../core/navigation'
 import { clearSession, session, updateSessionUser } from '../../core/session'
 import { getCurrentAccount, unwrap } from '../../services/agent'
@@ -52,8 +52,7 @@ const profile = computed(() => remoteProfile.value || {
 })
 const first = computed(() => String(profile.value.name || '?').slice(0, 1))
 
-usePortalGuard('agent')
-onShow(loadProfile)
+onShow(() => { if (enforcePortal('agent')) loadProfile() })
 
 async function loadProfile() {
   try {
