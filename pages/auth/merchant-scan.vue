@@ -38,7 +38,7 @@ function startScan() {
       }
       uni.setStorageSync('merchant-pending-invite', inviteCode)
       uni.showToast({ title: '已识别开店邀请', icon: 'success' })
-      setTimeout(goBack, 700)
+      setTimeout(() => uni.redirectTo({ url: '/pages/merchant/onboarding-basic' }), 700)
     },
     fail: (error) => { if (!String(error.errMsg || '').includes('cancel')) uni.showToast({ title: '未能识别二维码，请重试', icon: 'none' }) }
   })

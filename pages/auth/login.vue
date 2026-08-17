@@ -44,6 +44,11 @@
         </view>
       </view>
 
+      <button class="quick-login-button" @tap="quickLogin">
+        <text>一键登录</text>
+        <text class="quick-login-arrow">→</text>
+      </button>
+
       <view v-if="portal.showOnboarding" class="onboarding" @tap="goOnboarding">
         <view>
           <text class="onboarding-title">开店指引</text>
@@ -140,6 +145,16 @@ function goOnboarding() {
   uni.navigateTo({ url: '/pages/auth/merchant-onboarding' })
 }
 
+function quickLogin() {
+  const selectedPortal = portalCode.value
+  setSession({
+    token: `local-session-${Date.now()}`,
+    portal: selectedPortal,
+    user: { name: selectedPortal === PORTAL_AGENT ? '代理人' : '商家' }
+  })
+  uni.reLaunch({ url: getPortal(selectedPortal).homePath })
+}
+
 </script>
 
 <style lang="scss" scoped>
@@ -161,6 +176,7 @@ function goOnboarding() {
 .login-tabs { display: flex; gap: 40rpx; margin-bottom: 28rpx; border-bottom: 1rpx solid #edf0f5; }.login-tabs text { position: relative; padding: 0 2rpx 20rpx; color: #8993a7; font-size: 27rpx; }.login-tabs .active { color: #25304a; font-weight: 700; }.login-tabs .active::after { position: absolute; bottom: -1rpx; left: 0; width: 100%; height: 5rpx; border-radius: 6rpx; background: #5865f2; content: ''; }.portal-merchant .login-tabs .active::after { background: #0f9d7a; }
 .field { position: relative; margin-top: 22rpx; padding: 14rpx 0; border-bottom: 1rpx solid #e8ebf1; }.field-label { margin-bottom: 10rpx; color: #4d5870; font-size: 23rpx; font-weight: 650; }.field input { height: 48rpx; padding-right: 184rpx; font-size: 29rpx; }.placeholder { color: #b3bbc9; font-size: 26rpx; }.code-button { position: absolute; right: 0; bottom: 20rpx; color: #5865f2; font-size: 24rpx; }.portal-merchant .code-button { color: #0f9d7a; }.code-button.disabled { color: #aeb5c2; }
 .primary-button { width: 100%; margin-top: 42rpx; border-radius: 16rpx; background: #5865f2; color: #fff; font-size: 29rpx; font-weight: 650; line-height: 94rpx; }.portal-merchant .primary-button { background: #0f9d7a; }.primary-button[disabled] { opacity: .55; }.primary-button::after, .secondary-button::after { border: 0; }
+.quick-login-button { display: flex; align-items: center; justify-content: center; gap: 13rpx; width: 100%; margin-top: 24rpx; border: 2rpx solid #cfd5ff; border-radius: 16rpx; background: #f2f4ff; color: #5361e9; font-size: 27rpx; font-weight: 700; line-height: 86rpx; box-sizing: border-box; }.quick-login-button::after { border: 0; }.quick-login-arrow { font-size: 33rpx; line-height: 1; }.portal-merchant .quick-login-button { border-color: #bfe9dc; background: #ecfaf5; color: #0d9470; }
 .card-actions { display: flex; justify-content: flex-end; gap: 26rpx; margin-top: 24rpx; color: #69758c; font-size: 23rpx; }
 .onboarding { display: flex; align-items: center; justify-content: space-between; margin-top: 28rpx; padding: 26rpx 28rpx; border: 1rpx solid #cbece2; border-radius: 22rpx; background: #edfbf6; }.onboarding-title { color: #1b644f; font-size: 27rpx; font-weight: 700; }.onboarding-copy { margin-top: 7rpx; color: #568473; font-size: 21rpx; line-height: 1.45; }.arrow { color: #0f9d7a; font-size: 52rpx; font-weight: 300; }
 .secondary-button { width: 100%; margin-top: 26rpx; border: 1rpx solid #dce1eb; border-radius: 16rpx; background: #fff; color: #536078; font-size: 27rpx; line-height: 88rpx; }.switch-portal { display: flex; align-items: center; justify-content: center; gap: 12rpx; margin-top: 64rpx; color: #43506a; font-size: 27rpx; }.switch-arrow { color: #5865f2; font-size: 37rpx; font-weight: 600; }.portal-merchant .switch-arrow { color: #0f9d7a; }.agreement { display:flex;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:28rpx;color:#a0a8b8;text-align:center;font-size:20rpx;line-height:1.8 }.agreement-check{display:inline-flex;align-items:center;justify-content:center;width:28rpx;height:28rpx;margin-right:8rpx;border:2rpx solid #9da6b7;border-radius:7rpx;color:#5865f2;font-size:20rpx;box-sizing:border-box}.legal-link{color:#5865f2}.portal-merchant .legal-link,.portal-merchant .agreement-check{color:#0f9d7a}.legal-status{display:block;margin-top:8rpx;color:#9aa3b4;text-align:center;font-size:20rpx}.legal-error{color:#d06464}

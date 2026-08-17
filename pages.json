@@ -50,6 +50,38 @@
       }
     },
     {
+      "path": "pages/merchant/orders",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "订单列表" }
+    },
+    {
+      "path": "pages/merchant/notifications",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "消息通知" }
+    },
+    {
+      "path": "pages/merchant/activities",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "活动与套餐" }
+    },
+    {
+      "path": "pages/merchant/package-form",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "套餐编辑" }
+    },
+    {
+      "path": "pages/merchant/onboarding-basic",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "商家入驻" }
+    },
+    {
+      "path": "pages/merchant/onboarding-qualification",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "资质认证" }
+    },
+    {
+      "path": "pages/merchant/onboarding-settlement",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "收付签约" }
+    },
+    {
+      "path": "pages/merchant/onboarding-result",
+      "style": { "navigationStyle": "custom", "navigationBarTitleText": "审核结果" }
+    },
+    {
       "path": "pages/agent/home",
       "style": {
         "navigationStyle": "custom",

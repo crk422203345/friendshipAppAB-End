@@ -87,9 +87,10 @@ const notices = ref([]);
 const dashboardNotices = ref([]);
 onMounted(async () => {
   if (!enforcePortal("agent")) return;
+  if (String(session.token).startsWith('local-session-')) return;
   await Promise.all([loadDashboard(), loadAnnouncements()]);
 });
-onShow(() => { if (session.token && session.portal === 'agent') loadUnreadCount() });
+onShow(() => { if (session.token && session.portal === 'agent' && !String(session.token).startsWith('local-session-')) loadUnreadCount() });
 async function loadDashboard() {
   try {
     const data = unwrap(await getDashboard()) || {};
